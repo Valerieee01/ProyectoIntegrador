@@ -99,22 +99,28 @@ public class mainInterfaceUser extends JFrame {
 	    panelMenuBar.setLayout(null);
 
 		JLabel LabelPrestamoSalas = new JLabel("Prestamos de Salas ");
-		LabelPrestamoSalas.setBounds(83, 25, 134, 14);
+		LabelPrestamoSalas.setBounds(83, 25, 134, 28);
+		LabelPrestamoSalas.setBackground(new Color(199, 235, 252));
+		LabelPrestamoSalas.setOpaque(true); // ¡Esto es clave!	
 		LabelPrestamoSalas.setHorizontalAlignment(SwingConstants.CENTER);
 		panelMenuBar.add(LabelPrestamoSalas);
 		
 		JLabel lblPrestamoDeAudiovisuales = new JLabel("Prestamo de Audiovisuales");
-		lblPrestamoDeAudiovisuales.setBounds(348, 25, 169, 14);
+		lblPrestamoDeAudiovisuales.setOpaque(true); // ¡Esto es clave!
+		lblPrestamoDeAudiovisuales.setBackground(new Color(199, 235, 252));
+		lblPrestamoDeAudiovisuales.setBounds(348, 25, 169, 28);
 		lblPrestamoDeAudiovisuales.setHorizontalAlignment(SwingConstants.CENTER);
 		panelMenuBar.add(lblPrestamoDeAudiovisuales);
 		
 		JLabel labelHistorialPrestamos = new JLabel("Historial Prestamos");
-		labelHistorialPrestamos.setBounds(633, 25, 134, 14);
+		labelHistorialPrestamos.setOpaque(true); // ¡Esto es clave!
+		labelHistorialPrestamos.setBounds(633, 25, 134, 28);
+		labelHistorialPrestamos.setBackground(new Color(199, 235, 252));
 		labelHistorialPrestamos.setHorizontalAlignment(SwingConstants.CENTER);
 		panelMenuBar.add(labelHistorialPrestamos);
 		
 		Color colorNormal = new Color(199, 235, 252); // Color inicial
-		Color colorHover = new Color(34, 200, 200);  // Color al pasar el mouse
+		Color colorHover = new Color(220, 220, 220);  // Color al pasar el mouse
 
 		// Acciones para label menu
 		LabelPrestamoSalas.addMouseListener(new MouseAdapter() {

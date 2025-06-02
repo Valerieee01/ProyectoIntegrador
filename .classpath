@@ -13,5 +13,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="C:/Users/zharm/Downloads/ojdbc11.jar"/>
 	<classpathentry kind="lib" path="C:/Users/zharm/Downloads/util.zip"/>
+	<classpathentry kind="lib" path="C:/Users/zharm/Downloads/mysql-connector-j-9.3.0/mysql-connector-j-9.3.0/mysql-connector-j-9.3.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
