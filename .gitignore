@@ -35,5 +35,5 @@ Thumbs.db
 *.log
 logs/
 
-# Dependencias (si usas Maven/Gradle)
+# Dependencias 
 dependency-reduced-pom.xml

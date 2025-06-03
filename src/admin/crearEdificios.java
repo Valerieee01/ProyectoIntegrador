@@ -1,21 +1,160 @@
 package admin;
 
-import javax.swing.JPanel;
-import java.awt.Color;
-import javax.swing.JLabel;
-import java.awt.Font;
-import javax.swing.SwingConstants;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.*;
 
 public class crearEdificios extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	/**
-	 * Create the panel.
-	 */
-	public crearEdificios() {
-		setLayout(null);
+    private JTextField txtNombre;
+    private JTable table;
+    private DefaultTableModel model;
+    private JButton btnAgregar, btnModificar, btnEliminar;
+    private int idSeleccionado = -1;
 
-	}
+    public crearEdificios() {
+        setLayout(null);
+        setBackground(new Color(240, 240, 240));
 
+        JLabel lblTitulo = new JLabel("Gestión de Edificios");
+        lblTitulo.setFont(new Font("Tahoma", Font.BOLD, 18));
+        lblTitulo.setBounds(20, 10, 300, 30);
+        add(lblTitulo);
+
+        JLabel lblNombre = new JLabel("Nombre:");
+        lblNombre.setBounds(20, 60, 80, 25);
+        add(lblNombre);
+
+        txtNombre = new JTextField();
+        txtNombre.setBounds(100, 60, 200, 25);
+        add(txtNombre);
+
+        btnAgregar = new JButton("Agregar");
+        btnAgregar.setBounds(320, 60, 100, 25);
+        add(btnAgregar);
+
+        btnModificar = new JButton("Modificar");
+        btnModificar.setBounds(430, 60, 100, 25);
+        add(btnModificar);
+
+        btnEliminar = new JButton("Eliminar");
+        btnEliminar.setBounds(540, 60, 100, 25);
+        add(btnEliminar);
+
+        model = new DefaultTableModel(new String[]{"ID", "Nombre"}, 0);
+        table = new JTable(model);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBounds(20, 100, 620, 250);
+        add(scrollPane);
+
+        cargarEdificios();
+
+        // Evento para seleccionar fila
+        table.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                int fila = table.getSelectedRow();
+                if (fila != -1) {
+                    idSeleccionado = Integer.parseInt(table.getValueAt(fila, 0).toString());
+                    txtNombre.setText(table.getValueAt(fila, 1).toString());
+                }
+            }
+        });
+
+        // Agregar edificio
+        btnAgregar.addActionListener(e -> agregarEdificio());
+
+        // Modificar edificio
+        btnModificar.addActionListener(e -> modificarEdificio());
+
+        // Eliminar edificio
+        btnEliminar.addActionListener(e -> eliminarEdificio());
+    }
+
+    // Método para cargar edificios en la tabla
+    private void cargarEdificios() {
+        model.setRowCount(0);
+        try (Connection con = util.ConexionBD.obtenerConexionAdmin();
+             Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT id, nombre FROM edificio")) {
+
+            while (rs.next()) {
+                model.addRow(new Object[]{rs.getInt("id"), rs.getString("nombre")});
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al cargar edificios: " + ex.getMessage());
+        }
+    }
+
+    // Método para agregar
+    private void agregarEdificio() {
+        String nombre = txtNombre.getText().trim();
+        if (nombre.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El nombre no puede estar vacío.");
+            return;
+        }
+        String sql = "INSERT INTO edificio (id, nombre) VALUES (edificio_seq.NEXTVAL, ?)";
+        try (Connection con = util.ConexionBD.obtenerConexionAdmin();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nombre);
+            ps.executeUpdate();
+            JOptionPane.showMessageDialog(this, "Edificio agregado.");
+            cargarEdificios();
+            txtNombre.setText("");
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al agregar: " + ex.getMessage());
+        }
+    }
+
+    // Método para modificar
+    private void modificarEdificio() {
+        if (idSeleccionado == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione un edificio para modificar.");
+            return;
+        }
+        String nombre = txtNombre.getText().trim();
+        if (nombre.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El nombre no puede estar vacío.");
+            return;
+        }
+        String sql = "UPDATE edificio SET nombre = ? WHERE id = ?";
+        try (Connection con = util.ConexionBD.obtenerConexionAdmin();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nombre);
+            ps.setInt(2, idSeleccionado);
+            ps.executeUpdate();
+            JOptionPane.showMessageDialog(this, "Edificio modificado.");
+            cargarEdificios();
+            txtNombre.setText("");
+            idSeleccionado = -1;
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al modificar: " + ex.getMessage());
+        }
+    }
+
+    // Método para eliminar
+    private void eliminarEdificio() {
+        if (idSeleccionado == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione un edificio para eliminar.");
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this, "¿Estás seguro?", "Confirmar", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            String sql = "DELETE FROM edificio WHERE id = ?";
+            try (Connection con = util.ConexionBD.obtenerConexionAdmin();
+                 PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, idSeleccionado);
+                ps.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Edificio eliminado.");
+                cargarEdificios();
+                txtNombre.setText("");
+                idSeleccionado = -1;
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Error al eliminar: " + ex.getMessage());
+            }
+        }
+    }
 }

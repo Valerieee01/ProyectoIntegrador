@@ -2,7 +2,13 @@ package user;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
+import util.ConexionBD;
+
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -14,14 +20,10 @@ public class panePrestamosEquipos extends JPanel {
     private JTable tableDispositivos;
     private JTable tableReferencias;
     private JButton btnReservar;
-    private Map<String, List<Referencia>> referenciasPorDispositivo;
 
     public panePrestamosEquipos() {
         setBackground(new Color(255, 255, 198));
         setLayout(null);
-        
-        // Inicializar datos de dispositivos y referencias
-        inicializarDatos();
         
         JLabel labelDispositivo = new JLabel("SISTEMA DE PRÉSTAMO DE EQUIPOS");
         labelDispositivo.setHorizontalAlignment(SwingConstants.CENTER);
@@ -62,7 +64,7 @@ public class panePrestamosEquipos extends JPanel {
         scrollDispositivos.setBounds(350, 75, 250, 120);
         add(scrollDispositivos);
         
-        // Tabla para mostrar referencias
+     // Tabla para mostrar referencias
         tableReferencias = new JTable();
         tableReferencias.setModel(new DefaultTableModel(
             new Object[][] {},
@@ -92,10 +94,49 @@ public class panePrestamosEquipos extends JPanel {
             if (dispositivoSeleccionado != null && !dispositivoSeleccionado.equals("Selecciona un dispositivo...")) {
                 String abreviatura = obtenerAbreviatura(dispositivoSeleccionado);
                 cargarImagenDispositivo(abreviatura, labelImgDispositivo);
-                mostrarReferenciasDispositivo(abreviatura);
+                cargarReferenciasDesdeBD(abreviatura); 
                 btnReservar.setEnabled(false);
             }
         });
+
+        
+        // Listener para selección en tabla de referencias
+        tableReferencias.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                btnReservar.setEnabled(tableReferencias.getSelectedRow() >= 0);
+            }
+        });
+        
+        // Tabla de dispositivos
+        tableDispositivos = new JTable();
+        tableDispositivos.setModel(new DefaultTableModel(
+        		  new Object[][] {
+                      {"1", "Computador Portátil", "PORT"},
+                      {"2", "Proyector", "PROY"},
+                      {"3", "Cámara", "CAM"},
+                      {"4", "Televisor", "TV"}
+                  },
+                  new String[] {"Código", "Nombre", "Abreviación"}
+        ));
+        
+     
+        // Tabla para mostrar referencias
+        tableReferencias = new JTable();
+        tableReferencias.setModel(new DefaultTableModel(
+            new Object[][] {},
+            new String[] {"Id", "Modelo", "Estado", "Disponibilidad"}
+        ));
+     
+        
+        // Botón de reserva
+        btnReservar = new JButton("RESERVAR EQUIPO");
+        btnReservar.setFont(new Font("Tahoma", Font.BOLD, 14));
+        btnReservar.setBounds(543, 214, 250, 40);
+        btnReservar.setEnabled(false);
+        add(btnReservar);
+        
+      
+       
         
         // Listener para selección en tabla de referencias
         tableReferencias.getSelectionModel().addListSelectionListener(e -> {
@@ -108,58 +149,83 @@ public class panePrestamosEquipos extends JPanel {
         btnReservar.addActionListener(e -> realizarReserva());
     }
     
+    private void cargarReferenciasDesdeBD(String abreviacion) {
+        DefaultTableModel modelo = (DefaultTableModel) tableReferencias.getModel();
+        modelo.setRowCount(0); // Limpiar la tabla
+
+        try (Connection conn = util.ConexionBDSoli.obtenerConexionSolicitante()) {
+            String sql = """
+                SELECT ea.codigo, ea.nombre, ea.observaciones
+                FROM AdminGestrorPrestamos.equipo_audiovisual ea
+                JOIN AdminGestrorPrestamos.tipo_dispositivo td ON ea.idTipo = td.id
+                WHERE UPPER(td.abreviacion) = ?
+            """;
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, abreviacion.toUpperCase());
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                int id = rs.getInt("codigo");
+                String nombre = rs.getString("nombre");
+                String observaciones = rs.getString("observaciones");
+
+                modelo.addRow(new Object[]{id, nombre, "Bueno", "Disponible"}); // Simulando campos
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error al cargar referencias: " + e.getMessage());
+        }
+    }
+
+    private void guardarReservaEnBD(int idPrestamo, int codigoEquipo) {
+        try (Connection conn = util.ConexionBDSoli.obtenerConexionSolicitante()) {
+    
+
+            String sql = "INSERT INTO AdminGestrorPrestamos.PrestamoEquipo (idPrestamo, codigoEquipo) VALUES (?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, idPrestamo); 
+            ps.setInt(2, codigoEquipo);
+
+            ps.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Reserva registrada en la base de datos.");
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error al registrar reserva: " + e.getMessage());
+        }
+    }
+    
     private void realizarReserva() {
         int filaSeleccionada = tableReferencias.getSelectedRow();
         if (filaSeleccionada >= 0) {
             String referencia = (String) tableReferencias.getValueAt(filaSeleccionada, 0);
             String modelo = (String) tableReferencias.getValueAt(filaSeleccionada, 1);
             String disponibilidad = (String) tableReferencias.getValueAt(filaSeleccionada, 3);
-            
+
             if ("Disponible".equals(disponibilidad)) {
                 int confirmacion = JOptionPane.showConfirmDialog(
-                    this, 
+                    this,
                     "¿Confirmar reserva para:\n" + modelo + " (" + referencia + ")?",
                     "Confirmar Reserva",
                     JOptionPane.YES_NO_OPTION);
-                
+
                 if (confirmacion == JOptionPane.YES_OPTION) {
-                    JOptionPane.showMessageDialog(this, "Reserva realizada con éxito");
-                    // Aquí iría la lógica para registrar la reserva
+                    int codigoEquipo = Integer.parseInt(referencia); // Asegúrate que esta columna es el código
+                    int idPrestamo = 1; // Este valor deberías traerlo del módulo de préstamos
+
+                    guardarReservaEnBD(idPrestamo, codigoEquipo);
                 }
             } else {
-                JOptionPane.showMessageDialog(this, 
+                JOptionPane.showMessageDialog(this,
                     "Este equipo no está disponible para préstamo",
-                    "No Disponible", 
+                    "No Disponible",
                     JOptionPane.WARNING_MESSAGE);
             }
         }
     }
-    
-    private void inicializarDatos() {
-        referenciasPorDispositivo = new HashMap<>();
-        
-        referenciasPorDispositivo.put("PC", Arrays.asList(
-            new Referencia("PC-001", "Dell XPS 15", "Excelente", "Disponible"),
-            new Referencia("PC-002", "MacBook Pro M1", "Bueno", "Prestado"),
-            new Referencia("PC-003", "HP EliteBook", "Regular", "Disponible")
-        ));
-        
-        referenciasPorDispositivo.put("PY", Arrays.asList(
-            new Referencia("PY-101", "Epson EB-1781W", "Excelente", "Disponible"),
-            new Referencia("PY-102", "BenQ MH535", "Bueno", "Disponible")
-        ));
-        
-        referenciasPorDispositivo.put("CAM", Arrays.asList(
-            new Referencia("CAM-201", "Canon EOS R5", "Excelente", "En mantenimiento"),
-            new Referencia("CAM-202", "Sony A7 III", "Bueno", "Disponible")
-        ));
-        
-        referenciasPorDispositivo.put("TV", Arrays.asList(
-            new Referencia("TV-301", "Samsung QLED 55\"", "Excelente", "Disponible"),
-            new Referencia("TV-302", "LG OLED 65\"", "Bueno", "Prestado")
-        ));
-    }
-    
+
     private String obtenerAbreviatura(String nombreDispositivo) {
         DefaultTableModel model = (DefaultTableModel) tableDispositivos.getModel();
         for (int i = 0; i < model.getRowCount(); i++) {
@@ -173,8 +239,8 @@ public class panePrestamosEquipos extends JPanel {
     private void cargarImagenDispositivo(String abreviatura, JLabel label) {
         String rutaImagen = "";
         switch (abreviatura) {
-            case "PC": rutaImagen = "/img/pc.jpg"; break;
-            case "PY": rutaImagen = "/img/proyector.jpg"; break;
+            case "PORT": rutaImagen = "/img/pc.jpg"; break;
+            case "PROY": rutaImagen = "/img/proyector.jpg"; break;
             case "CAM": rutaImagen = "/img/camara.jpg"; break;
             case "TV": rutaImagen = "/img/tv.jpg"; break;
             default: rutaImagen = "/img/default.jpg";
@@ -182,22 +248,6 @@ public class panePrestamosEquipos extends JPanel {
         cargarImagenEnLabel(label, rutaImagen, 238, 150);
     }
     
-    private void mostrarReferenciasDispositivo(String abreviaturaDispositivo) {
-        DefaultTableModel model = (DefaultTableModel) tableReferencias.getModel();
-        model.setRowCount(0);
-        
-        List<Referencia> referencias = referenciasPorDispositivo.get(abreviaturaDispositivo);
-        if (referencias != null) {
-            for (Referencia ref : referencias) {
-                model.addRow(new Object[]{
-                    ref.getCodigo(),
-                    ref.getModelo(),
-                    ref.getEstado(),
-                    ref.getDisponibilidad()
-                });
-            }
-        }
-    }
     
     public void cargarImagenEnLabel(JLabel label, String rutaInterna, int ancho, int alto) {
         try {
@@ -213,22 +263,5 @@ public class panePrestamosEquipos extends JPanel {
         }
     }
     
-    class Referencia {
-        private String codigo;
-        private String modelo;
-        private String estado;
-        private String disponibilidad;
-        
-        public Referencia(String codigo, String modelo, String estado, String disponibilidad) {
-            this.codigo = codigo;
-            this.modelo = modelo;
-            this.estado = estado;
-            this.disponibilidad = disponibilidad;
-        }
-        
-        public String getCodigo() { return codigo; }
-        public String getModelo() { return modelo; }
-        public String getEstado() { return estado; }
-        public String getDisponibilidad() { return disponibilidad; }
-    }
+    
 }

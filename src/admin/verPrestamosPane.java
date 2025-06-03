@@ -49,7 +49,7 @@ public class verPrestamosPane extends JPanel {
         btnEliminar.setBounds(720, 20, 100, 25);
         add(btnEliminar);
 
-        tableModel = new DefaultTableModel(new String[]{"ID", "ID Prestamo", "Código", "Tipo"}, 0);
+        tableModel = new DefaultTableModel(new String[]{"ID", "ID Prestamo", " Codigo (equipo o Sala)", "Tipo"}, 0);
         table = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBounds(20, 60, 800, 300);
@@ -74,7 +74,7 @@ public class verPrestamosPane extends JPanel {
 
     private void cargarPrestamos() {
         try {
-            Connection con = util.ConexionBD.obtenerConexion();
+            Connection con = util.ConexionBD.obtenerConexionAdmin();
             tableModel.setRowCount(0);
 
             // Cargar préstamos de salas
@@ -124,7 +124,7 @@ public class verPrestamosPane extends JPanel {
         int nuevoCodigo = Integer.parseInt(txtCodigo.getText());
 
         try {
-            Connection con = util.ConexionBD.obtenerConexion();
+            Connection con = util.ConexionBD.obtenerConexionAdmin();
             String sql = "";
             if (tipo.equalsIgnoreCase("Sala")) {
                 sql = "UPDATE PrestamoSala SET idPrestamo = ?, codigoSala = ? WHERE id = ?";
@@ -161,7 +161,7 @@ public class verPrestamosPane extends JPanel {
         String tipo = tableModel.getValueAt(fila, 3).toString();
 
         try {
-            Connection con = util.ConexionBD.obtenerConexion();
+            Connection con = util.ConexionBD.obtenerConexionAdmin();
             String sql = tipo.equals("Sala") ?
                     "DELETE FROM PrestamoSala WHERE id = ?" :
                     "DELETE FROM PrestamoEquipo WHERE id = ?";

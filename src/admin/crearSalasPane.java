@@ -1,10 +1,7 @@
 package admin;
 
-import javax.swing.JPanel;
 import java.awt.Color;
-import javax.swing.JLabel;
 import java.awt.Font;
-import javax.swing.SwingConstants;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -18,7 +15,9 @@ public class crearSalasPane extends JPanel {
 
     private JTable table;
     private DefaultTableModel tableModel;
-    private JTextField txtObservaciones, txtIdEdificio;
+    private JTextField txtObservaciones;
+    private JComboBox<String> comboEdificios;
+    private java.util.Map<String, Integer> mapaEdificios; // nombre -> id
 
     public crearSalasPane() {
         setLayout(null);
@@ -31,14 +30,19 @@ public class crearSalasPane extends JPanel {
         txtObservaciones = new JTextField();
         txtObservaciones.setBounds(140, 30, 200, 25);
         add(txtObservaciones);
-
-        JLabel lblIdEdificio = new JLabel("ID Edificio:");
-        lblIdEdificio.setBounds(30, 70, 100, 25);
+        
+        JLabel lblIdEdificio = new JLabel("Edificio:");
+        lblIdEdificio.setBounds(30, 66, 100, 20);
         add(lblIdEdificio);
 
-        txtIdEdificio = new JTextField();
-        txtIdEdificio.setBounds(140, 70, 200, 25);
-        add(txtIdEdificio);
+        comboEdificios = new JComboBox<>();
+        comboEdificios.setBounds(140, 66, 200, 25);
+        add(comboEdificios);
+
+        mapaEdificios = new java.util.HashMap<>();
+
+        // Cargar edificios en el combo
+        cargarEdificiosDesdeBD();
 
         JButton btnAgregar = new JButton("Agregar");
         btnAgregar.setBounds(30, 110, 100, 30);
@@ -72,27 +76,66 @@ public class crearSalasPane extends JPanel {
                 int fila = table.getSelectedRow();
                 if (fila != -1) {
                     txtObservaciones.setText(tableModel.getValueAt(fila, 1).toString());
-                    txtIdEdificio.setText(tableModel.getValueAt(fila, 2).toString());
                 }
+                
+                int idEdificio = (int) tableModel.getValueAt(fila, 3);
+
+                // Buscar nombre por idEdificio para mostrarlo en el combo
+                String nombreEdificio = null;
+                for (var entry : mapaEdificios.entrySet()) {
+                    if (entry.getValue() == idEdificio) {
+                        nombreEdificio = entry.getKey();
+                        break;
+                    }
+                }
+                comboEdificios.setSelectedItem(nombreEdificio);
             }
         });
     }
 
+    
+    private void cargarEdificiosDesdeBD() {
+        try {
+            Connection con = util.ConexionBD.obtenerConexionAdmin();
+            Statement st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT id, nombre FROM edificio");
+
+            comboEdificios.removeAllItems();
+            mapaEdificios.clear();
+
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String nombre = rs.getString("nombre");
+                comboEdificios.addItem(nombre);
+                mapaEdificios.put(nombre, id);
+            }
+
+            rs.close();
+            st.close();
+            con.close();
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al cargar edificios: " + e.getMessage());
+        }
+    }
+    
+    
     private void agregarSala() {
         String obs = txtObservaciones.getText();
-        String idEd = txtIdEdificio.getText();
+        String nombreEdificio = (String) comboEdificios.getSelectedItem();
 
-        if (obs.isEmpty() || idEd.isEmpty()) {
+        if (obs.isEmpty() || nombreEdificio.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.");
             return;
         }
+        int idEdificio = mapaEdificios.get(nombreEdificio);
 
         try {
-            Connection con = util.ConexionBD.obtenerConexion();
+            Connection con = util.ConexionBD.obtenerConexionAdmin();
             String sql = "INSERT INTO sala_informatica (observaciones, idEdificio) VALUES (?, ?)";
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, obs);
-            ps.setInt(2, Integer.parseInt(idEd));
+            ps.setInt(2, idEdificio);
             ps.executeUpdate();
             ps.close();
             con.close();
@@ -112,23 +155,15 @@ public class crearSalasPane extends JPanel {
 
         int codigo = (int) tableModel.getValueAt(fila, 0);
         String obs = txtObservaciones.getText();
-        String idEd = txtIdEdificio.getText();
-
-        try {
-            Connection con = util.ConexionBD.obtenerConexion();
-            String sql = "UPDATE sala_informatica SET observaciones = ?, idEdificio = ? WHERE codigo = ?";
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, obs);
-            ps.setInt(2, Integer.parseInt(idEd));
-            ps.setInt(3, codigo);
-            ps.executeUpdate();
-            ps.close();
-            con.close();
-            JOptionPane.showMessageDialog(this, "Sala modificada.");
-            cargarSalasDesdeBD();
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error al modificar sala: " + ex.getMessage());
+        String nombreEdificio = (String) comboEdificios.getSelectedItem();
+        
+        if (nombreEdificio == null) {
+            JOptionPane.showMessageDialog(this, "Seleccione un edificio válido.");
+            return;
         }
+        int idEdificio = mapaEdificios.get(nombreEdificio);
+        modificarSalaBD(codigo, obs, idEdificio);
+        cargarSalasDesdeBD(); // refrescar tabla
     }
 
     private void eliminarSala() {
@@ -142,7 +177,7 @@ public class crearSalasPane extends JPanel {
         int confirm = JOptionPane.showConfirmDialog(this, "¿Eliminar sala?", "Confirmar", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                Connection con = util.ConexionBD.obtenerConexion();
+                Connection con = util.ConexionBD.obtenerConexionAdmin();
                 String sql = "DELETE FROM sala_informatica WHERE codigo = ?";
                 PreparedStatement ps = con.prepareStatement(sql);
                 ps.setInt(1, codigo);
@@ -156,10 +191,31 @@ public class crearSalasPane extends JPanel {
             }
         }
     }
-
+    
+    
+    
+     private void modificarSalaBD(int codigo, String obs, int idEd) {
+    	  try {
+              Connection con = util.ConexionBD.obtenerConexionAdmin();
+              String sql = "UPDATE sala_informatica SET observaciones = ?, idEdificio = ? WHERE codigo = ?";
+              PreparedStatement ps = con.prepareStatement(sql);
+              ps.setString(1, obs);
+              ps.setInt(2, idEd);
+              ps.setInt(3, codigo);
+              ps.executeUpdate();
+              ps.close();
+              con.close();
+              JOptionPane.showMessageDialog(this, "Sala modificada.");
+              cargarSalasDesdeBD();
+          } catch (SQLException ex) {
+              JOptionPane.showMessageDialog(this, "Error al modificar sala: " + ex.getMessage());
+          }
+     }
+     
+     
     private void cargarSalasDesdeBD() {
         try {
-            Connection con = util.ConexionBD.obtenerConexion();
+            Connection con = util.ConexionBD.obtenerConexionAdmin();
             Statement st = con.createStatement();
             ResultSet rs = st.executeQuery("SELECT * FROM sala_informatica");
             tableModel.setRowCount(0);
