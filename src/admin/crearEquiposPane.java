@@ -136,7 +136,7 @@ public class crearEquiposPane extends JPanel {
 
             try {
                 Connection con = util.ConexionBD.obtenerConexionAdmin();
-                String sql = "INSERT INTO equipo_audiovisual (nombre, observaciones, idEdificio) VALUES (?, ?, ?)";
+                String sql = "INSERT INTO equipo_audiovisual (idEquipo, nombre, observaciones, idEdificio) VALUES (seq_Edificio.NEXTVAL, ?, ?, ?)";
                 PreparedStatement ps = con.prepareStatement(sql);
                 ps.setString(1, nombre);
                 ps.setString(2, observaciones);
@@ -144,7 +144,6 @@ public class crearEquiposPane extends JPanel {
                 ps.executeUpdate();
                 ps.close();
                 con.close();
-
                 JOptionPane.showMessageDialog(this, "Equipo agregado correctamente.");
                 cargarEquiposDesdeBD(); // refrescar la tabla
                 txtNombre.setText("");
