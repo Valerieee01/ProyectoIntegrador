@@ -2,6 +2,9 @@ package user;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
+import util.UsuarioSesion;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
@@ -13,27 +16,19 @@ public class verPrestamosPane extends JPanel {
     private JTable table;
     private DefaultTableModel tableModel;
     private JTextField txtEspecialidad, txtInicio, txtFin, txtSolicitante, txtAdmin;
-    private JButton btnModificar, btnEliminar, btnRegistrar;
+    private JButton btnRegistrar;
     private JLabel lbltituloPrestamos;
     private JComboBox<String> comboObjeto;
-    private JComboBox<String> comboSolicitante, comboAdmin;
-    private Map<String, Integer> mapaUsuarios = new HashMap<>();
+    private JComboBox<String> comboAdmin;
     private Map<String, Integer> mapaAdmins = new HashMap<>();
     private JLabel lablTituloPrestamos;
-
+    private long idSolicitante = UsuarioSesion.getIdentificacion();
+    private String nombre = UsuarioSesion.getNombre();
 
 
     public verPrestamosPane() {
         setLayout(null);
         setBackground(new Color(255, 255, 206));
-
-        btnModificar = new JButton("Modificar");
-        btnModificar.setBounds(610, 20, 100, 25);
-        add(btnModificar);
-
-        btnEliminar = new JButton("Eliminar");
-        btnEliminar.setBounds(720, 20, 100, 25);
-        add(btnEliminar);
 
         tableModel = new DefaultTableModel(new String[]{"ID", "Objeto", "Especialidad", "Inicio", "Fin", "Solicitante", "Admin"}, 0);
         table = new JTable(tableModel);
@@ -53,10 +48,9 @@ public class verPrestamosPane extends JPanel {
         add(lblObjeto);
 
         comboObjeto = new JComboBox<>();
-        comboObjeto.setBounds(71, 371, 250, 25);  // Más ancho para mostrar nombre y código
+        comboObjeto.setBounds(71, 371, 250, 25); 
         add(comboObjeto);
 ;
-
         JLabel lblEsp = new JLabel("Especialidad:");
         lblEsp.setBounds(350, 371, 100, 25);
         add(lblEsp);
@@ -77,28 +71,18 @@ public class verPrestamosPane extends JPanel {
         txtFin = new JTextField("YYYY-MM-DD HH:MM:SS");
         txtFin.setBounds(80, 410, 150, 25);
         add(txtFin);
-
-        JLabel lblSolicitante = new JLabel("ID Sol:");
-        lblSolicitante.setBounds(250, 410, 100, 25);
-        add(lblSolicitante);
     
         // Reemplaza txtAdmin
         comboAdmin = new JComboBox<>();
-        comboAdmin.setBounds(490, 410, 100, 25);
+        comboAdmin.setBounds(360, 410, 256, 25);
         add(comboAdmin);
 
         JLabel lblAdmin = new JLabel("ID Admin:");
-        lblAdmin.setBounds(420, 410, 100, 25);
+        lblAdmin.setBounds(292, 410, 100, 25);
         add(lblAdmin);
-        
-        // Reemplaza txtSolicitante
-        comboSolicitante = new JComboBox<>();
-        comboSolicitante.setBounds(300, 410, 100, 25);
-        add(comboSolicitante);
-
 
         btnRegistrar = new JButton("Registrar Préstamo");
-        btnRegistrar.setBounds(610, 410, 150, 25);
+        btnRegistrar.setBounds(643, 24, 150, 25);
         add(btnRegistrar);
         
         lablTituloPrestamos = new JLabel("Gestion de prestamos");
@@ -107,45 +91,20 @@ public class verPrestamosPane extends JPanel {
         add(lablTituloPrestamos);
 
         cargarPrestamos();
-
-    
-        btnModificar.addActionListener(e -> modificarPrestamo());
-        btnEliminar.addActionListener(e -> eliminarPrestamo());
         btnRegistrar.addActionListener(e -> registrarPrestamo());
         
         cargarOpcionesObjeto();
+        cargarAdministradores();
         
         String seleccionado = (String) comboObjeto.getSelectedItem(); 
         String[] partes = seleccionado.split("[-:]");
         String tipo = partes[0].trim(); 
         int codigo = Integer.parseInt(partes[1].trim()); 
         
-        cargarUsuarios();
-        cargarAdministradores();
+        
+    
     }
     
-    
-    private void cargarUsuarios() {
-        try {
-            Connection con = util.ConexionBDSoli.obtenerConexionSolicitante();
-            PreparedStatement ps = con.prepareStatement("SELECT identificacion , nombre FROM AdminGestrorPrestamos.solicitante");
-            ResultSet rs = ps.executeQuery();
-            mapaUsuarios.clear();
-            comboSolicitante.removeAllItems();
-
-            while (rs.next()) {
-                int id = rs.getInt("identificacion");
-                String nombre = rs.getString("nombre");
-                String entrada = id + " - " + nombre;
-                comboSolicitante.addItem(entrada);
-                mapaUsuarios.put(entrada, id);
-            }
-
-            rs.close(); ps.close(); con.close();
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al cargar usuarios: " + e.getMessage());
-        }
-    }
 
     private void cargarAdministradores() {
         try {
@@ -234,107 +193,6 @@ public class verPrestamosPane extends JPanel {
             JOptionPane.showMessageDialog(this, "Error al cargar préstamos: " + e.getMessage());
         }
     }
-
-
-    private void modificarPrestamo() {
-        int fila = table.getSelectedRow();
-        if (fila == -1) {
-            JOptionPane.showMessageDialog(this, "Seleccione un préstamo para modificar.");
-            return;
-        }
-
-        int id = (int) tableModel.getValueAt(fila, 0);  // ID del préstamo
-        String objetoSeleccionado = (String) comboObjeto.getSelectedItem();
-        String[] partes = objetoSeleccionado.split("[-:]");
-        String tipo = partes[0].trim(); // "Sala" o "Equipo"
-        int codigo = Integer.parseInt(partes[1].trim());
-
-        String especialidad = txtEspecialidad.getText();
-        String fechaInicio = txtInicio.getText();
-        String fechaFin = txtFin.getText();
-
-        int idSolicitante = mapaUsuarios.get((String) comboSolicitante.getSelectedItem());
-        int idAdmin = mapaAdmins.get((String) comboAdmin.getSelectedItem());
-
-        try {
-            Connection con = util.ConexionBD.obtenerConexionAdmin();
-
-            // 1. Actualizar RegistroPrestamo
-            String sqlUpdateRegistro = "UPDATE AdminGestrorPrestamos.RegistroPrestamo SET objetoSolicita = ?, especialidad = ?, " +
-                    "FechaHoraInicio = TO_DATE(?, 'YYYY-MM-DD HH24:MI:SS'), FechaHoraFin = TO_DATE(?, 'YYYY-MM-DD HH24:MI:SS'), " +
-                    "idSolicitante = ?, idAdmin = ? WHERE id = ?";
-            PreparedStatement ps1 = con.prepareStatement(sqlUpdateRegistro);
-            ps1.setString(1, objetoSeleccionado);
-            ps1.setString(2, especialidad);
-            ps1.setString(3, fechaInicio);
-            ps1.setString(4, fechaFin);
-            ps1.setInt(5, idSolicitante);
-            ps1.setInt(6, idAdmin);
-            ps1.setInt(7, id);
-            ps1.executeUpdate();
-            ps1.close();
-
-            // 2. Actualizar tabla específica
-            String sqlUpdateTipo;
-            if (tipo.equalsIgnoreCase("Sala")) {
-                sqlUpdateTipo = "UPDATE AdminGestrorPrestamos.PrestamoSala SET codigoSala = ? WHERE idPrestamo = ?";
-            } else {
-                sqlUpdateTipo = "UPDATE AdminGestrorPrestamos.PrestamoEquipo SET codigoEquipo = ? WHERE idPrestamo = ?";
-            }
-
-            PreparedStatement ps2 = con.prepareStatement(sqlUpdateTipo);
-            ps2.setInt(1, codigo);
-            ps2.setInt(2, id);
-            ps2.executeUpdate();
-            ps2.close();
-
-            con.close();
-            JOptionPane.showMessageDialog(this, "Préstamo modificado exitosamente.");
-            cargarPrestamos();
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al modificar préstamo: " + e.getMessage());
-        }
-    }
-
-
-    private void eliminarPrestamo() {
-        int fila = table.getSelectedRow();
-        if (fila == -1) {
-            JOptionPane.showMessageDialog(this, "Seleccione un préstamo para eliminar.");
-            return;
-        }
-        int id = (int) tableModel.getValueAt(fila, 0);
-        String tipo = tableModel.getValueAt(fila, 3).toString();
-
-        try {
-            Connection con = util.ConexionBD.obtenerConexionAdmin();
-
-            // Primero eliminar dependencias
-            String sql1 = tipo.equalsIgnoreCase("Sala") ? 
-                "DELETE FROM AdminGestrorPrestamos.PrestamoSala WHERE idPrestamo = ?" : 
-                "DELETE FROM AdminGestrorPrestamos.PrestamoEquipo WHERE idPrestamo = ?";
-
-            PreparedStatement ps = con.prepareStatement(sql1);
-            ps.setInt(1, id);
-            ps.executeUpdate();
-            ps.close();
-
-            // Luego eliminar el registro principal
-            String sql2 = "DELETE FROM AdminGestrorPrestamos.RegistroPrestamo WHERE id = ?";
-            PreparedStatement ps1 = con.prepareStatement(sql2);
-            ps1.setInt(1, id);
-            ps1.executeUpdate();
-            ps1.close();
-
-            con.close();
-
-            JOptionPane.showMessageDialog(this, "Préstamo eliminado.");
-            cargarPrestamos();
-
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al eliminar: " + e.getMessage());
-        }
-    }
     private void registrarPrestamo() {
         Connection con = null;
         PreparedStatement ps = null;
@@ -356,10 +214,8 @@ public class verPrestamosPane extends JPanel {
 
             if (nuevoIdPrestamo == -1) throw new SQLException("No se pudo obtener el ID del préstamo.");
 
-            // Obtener ID del solicitante y admin desde los mapas
-            String solicitanteSeleccionado = (String) comboSolicitante.getSelectedItem();
+            // Obtener ID del admin desde los mapas
             String adminSeleccionado = (String) comboAdmin.getSelectedItem();
-            int idSolicitante = mapaUsuarios.get(solicitanteSeleccionado);
             int idAdmin = mapaAdmins.get(adminSeleccionado);
 
             // 2. Insertar en RegistroPrestamo
@@ -372,7 +228,7 @@ public class verPrestamosPane extends JPanel {
             ps.setString(3, txtEspecialidad.getText());
             ps.setString(4, txtInicio.getText());
             ps.setString(5, txtFin.getText());
-            ps.setInt(6, idSolicitante);
+            ps.setLong(6, idSolicitante);
             ps.setInt(7, idAdmin);
             ps.executeUpdate();
             ps.close();
@@ -422,5 +278,4 @@ public class verPrestamosPane extends JPanel {
             }
         }
     }
-
 }

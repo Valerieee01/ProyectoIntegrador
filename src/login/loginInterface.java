@@ -99,7 +99,7 @@ public class loginInterface extends JFrame {
 		            try (Connection conn = util.ConexionBD.obtenerConexionAdmin()) {
 
 		                // Verificar en AdministradorSoftware
-		                String queryAdmin = "SELECT nombre FROM AdministradorSoftware WHERE correo = ? AND contrasenia = ?";
+		            	String queryAdmin = "SELECT identificacion, nombre, apellido, correo FROM AdministradorSoftware WHERE correo = ? AND contrasenia = ?";
 		                try (PreparedStatement pstAdmin = conn.prepareStatement(queryAdmin)) {
 		                    pstAdmin.setString(1, correo);
 		                    pstAdmin.setString(2, password);
@@ -138,7 +138,6 @@ public class loginInterface extends JFrame {
 
 		                        // Guardar usuario en sesión
 		                        util.UsuarioSesion.iniciarSesion(id, nombre, apellido, correoUsuario);
-
 		                        JOptionPane.showMessageDialog(null, "Bienvenido Solicitante: " + nombre);
 
 		                        // Abrir ventana de solicitante
