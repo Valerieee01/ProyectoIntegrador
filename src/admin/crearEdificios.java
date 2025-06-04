@@ -15,6 +15,8 @@ public class crearEdificios extends JPanel {
     private DefaultTableModel model;
     private JButton btnAgregar, btnModificar, btnEliminar;
     private int idSeleccionado = -1;
+    private JLabel lblCodigo;
+    private JTextField textFieldCodigo;
 
     public crearEdificios() {
         setLayout(null);
@@ -26,30 +28,39 @@ public class crearEdificios extends JPanel {
         add(lblTitulo);
 
         JLabel lblNombre = new JLabel("Nombre:");
-        lblNombre.setBounds(20, 60, 80, 25);
+        lblNombre.setBounds(20, 98, 80, 25);
         add(lblNombre);
 
         txtNombre = new JTextField();
-        txtNombre.setBounds(100, 60, 200, 25);
+        txtNombre.setBounds(103, 98, 200, 25);
         add(txtNombre);
 
         btnAgregar = new JButton("Agregar");
-        btnAgregar.setBounds(320, 60, 100, 25);
+        btnAgregar.setBounds(320, 78, 100, 25);
         add(btnAgregar);
 
         btnModificar = new JButton("Modificar");
-        btnModificar.setBounds(430, 60, 100, 25);
+        btnModificar.setBounds(430, 78, 100, 25);
         add(btnModificar);
 
         btnEliminar = new JButton("Eliminar");
-        btnEliminar.setBounds(540, 60, 100, 25);
+        btnEliminar.setBounds(540, 78, 100, 25);
         add(btnEliminar);
 
         model = new DefaultTableModel(new String[]{"ID", "Nombre"}, 0);
         table = new JTable(model);
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBounds(20, 100, 620, 250);
+        scrollPane.setBounds(20, 152, 620, 250);
         add(scrollPane);
+        
+        lblCodigo = new JLabel("Codigo:");
+        lblCodigo.setBounds(20, 60, 80, 25);
+        add(lblCodigo);
+        
+        textFieldCodigo = new JTextField();
+        textFieldCodigo.setText("");
+        textFieldCodigo.setBounds(103, 60, 200, 25);
+        add(textFieldCodigo);
 
         cargarEdificios();
 
@@ -91,15 +102,17 @@ public class crearEdificios extends JPanel {
 
     // Método para agregar
     private void agregarEdificio() {
+    	String id = textFieldCodigo.getText().trim(); 
         String nombre = txtNombre.getText().trim();
         if (nombre.isEmpty()) {
             JOptionPane.showMessageDialog(this, "El nombre no puede estar vacío.");
             return;
         }
-        String sql = "INSERT INTO edificio (id, nombre) VALUES (edificio_seq.NEXTVAL, ?)";
+        String sql = "INSERT INTO edificio (id, nombre) VALUES (?, ?)";
         try (Connection con = util.ConexionBD.obtenerConexionAdmin();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, nombre);
+            ps.setString(1, id);
+            ps.setString(2, nombre);
             ps.executeUpdate();
             JOptionPane.showMessageDialog(this, "Edificio agregado.");
             cargarEdificios();

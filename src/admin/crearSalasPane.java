@@ -18,25 +18,26 @@ public class crearSalasPane extends JPanel {
     private JTextField txtObservaciones;
     private JComboBox<String> comboEdificios;
     private java.util.Map<String, Integer> mapaEdificios; // nombre -> id
+    private JTextField textFieldCodigoSala;
 
     public crearSalasPane() {
         setLayout(null);
         setBackground(new Color(255, 255, 206));
 
         JLabel lblObservaciones = new JLabel("Observaciones:");
-        lblObservaciones.setBounds(30, 30, 100, 25);
+        lblObservaciones.setBounds(33, 75, 100, 25);
         add(lblObservaciones);
 
         txtObservaciones = new JTextField();
-        txtObservaciones.setBounds(140, 30, 200, 25);
+        txtObservaciones.setBounds(143, 75, 200, 25);
         add(txtObservaciones);
         
         JLabel lblIdEdificio = new JLabel("Edificio:");
-        lblIdEdificio.setBounds(30, 66, 100, 20);
+        lblIdEdificio.setBounds(33, 111, 100, 20);
         add(lblIdEdificio);
 
         comboEdificios = new JComboBox<>();
-        comboEdificios.setBounds(140, 66, 200, 25);
+        comboEdificios.setBounds(143, 111, 200, 25);
         add(comboEdificios);
 
         mapaEdificios = new java.util.HashMap<>();
@@ -45,15 +46,15 @@ public class crearSalasPane extends JPanel {
         cargarEdificiosDesdeBD();
 
         JButton btnAgregar = new JButton("Agregar");
-        btnAgregar.setBounds(30, 110, 100, 30);
+        btnAgregar.setBounds(33, 147, 100, 30);
         add(btnAgregar);
 
         JButton btnModificar = new JButton("Modificar");
-        btnModificar.setBounds(140, 110, 100, 30);
+        btnModificar.setBounds(143, 147, 100, 30);
         add(btnModificar);
 
         JButton btnEliminar = new JButton("Eliminar");
-        btnEliminar.setBounds(250, 110, 100, 30);
+        btnEliminar.setBounds(253, 147, 100, 30);
         add(btnEliminar);
 
         // Tabla
@@ -61,8 +62,22 @@ public class crearSalasPane extends JPanel {
         tableModel = new DefaultTableModel(columnas, 0);
         table = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBounds(30, 160, 500, 250);
+        scrollPane.setBounds(23, 189, 500, 250);
         add(scrollPane);
+        
+        JLabel labelCodigoSalas = new JLabel("Codigo:");
+        labelCodigoSalas.setBounds(33, 39, 100, 25);
+        add(labelCodigoSalas);
+        
+        textFieldCodigoSala = new JTextField();
+        textFieldCodigoSala.setBounds(143, 39, 200, 25);
+        add(textFieldCodigoSala);
+        
+        JLabel lblSalas = new JLabel("Registrar Salas de Informatica");
+        lblSalas.setFont(new Font("Tahoma", Font.BOLD, 17));
+        lblSalas.setHorizontalAlignment(SwingConstants.LEFT);
+        lblSalas.setBounds(33, 11, 361, 30);
+        add(lblSalas);
 
         // Eventos
         cargarSalasDesdeBD();
@@ -121,21 +136,32 @@ public class crearSalasPane extends JPanel {
     
     
     private void agregarSala() {
+        String codigoTexto = textFieldCodigoSala.getText();
         String obs = txtObservaciones.getText();
         String nombreEdificio = (String) comboEdificios.getSelectedItem();
 
-        if (obs.isEmpty() || nombreEdificio.isEmpty()) {
+        if (codigoTexto.isEmpty() || obs.isEmpty() || nombreEdificio == null) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.");
             return;
         }
+
         int idEdificio = mapaEdificios.get(nombreEdificio);
+        int codigo;
+
+        try {
+            codigo = Integer.parseInt(codigoTexto);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "El código debe ser un número entero.");
+            return;
+        }
 
         try {
             Connection con = util.ConexionBD.obtenerConexionAdmin();
-            String sql = "INSERT INTO sala_informatica (observaciones, idEdificio) VALUES (?, ?)";
+            String sql = "INSERT INTO sala_informatica (codigo, observaciones, idEdificio) VALUES (?, ?, ?)";
             PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, obs);
-            ps.setInt(2, idEdificio);
+            ps.setInt(1, codigo);
+            ps.setString(2, obs);
+            ps.setInt(3, idEdificio);
             ps.executeUpdate();
             ps.close();
             con.close();
