@@ -67,6 +67,7 @@ public class mainInterfaceAdmin extends JFrame {
 	    verUsuariosPane verUsuariosPane = new verUsuariosPane();
 	    crearEdificios crearEdificios = new crearEdificios();
 	    crearReportesPane crearReportesPane = new crearReportesPane();
+	    PrestamosPane PrestamosPane = new PrestamosPane();
 
 
 
@@ -86,6 +87,8 @@ public class mainInterfaceAdmin extends JFrame {
 	    panelContenedor.add(verUsuariosPane, "namePaneVerUsuarios");
 	    panelContenedor.add(crearEdificios, "namePanecrearEdificios");
 	    panelContenedor.add(crearReportesPane, "namePanecrearReportesPane");
+	    panelContenedor.add(PrestamosPane, "namePanePrestamos");
+
 
 
 
@@ -103,30 +106,29 @@ public class mainInterfaceAdmin extends JFrame {
 	    JLabel labelCrearEquipos = new JLabel("Equipos");
 	    labelCrearEquipos.setBackground(new Color(199, 235, 252));
 	    labelCrearEquipos.setHorizontalAlignment(SwingConstants.CENTER);
-	    labelCrearEquipos.setOpaque(true); // ¡Esto es clave!
+	    labelCrearEquipos.setOpaque(true); 
 	    labelCrearEquipos.setBounds(25, 25, 134, 28);
 	    panelMenuBar.add(labelCrearEquipos);
 	    
 	    JLabel labelCrearSalas = new JLabel("Salas");
 	    labelCrearSalas.setBackground(new Color(199, 235, 252));
 	    labelCrearSalas.setHorizontalAlignment(SwingConstants.CENTER);
-	    labelCrearSalas.setBounds(509, 25, 169, 28);
-	    labelCrearSalas.setOpaque(true); // ¡Esto es clave! 
+	    labelCrearSalas.setBounds(382, 25, 169, 28);
+	    labelCrearSalas.setOpaque(true); 
 	    panelMenuBar.add(labelCrearSalas);
 	    
 	    JLabel labelUsuarios = new JLabel("Usuarios");
 	    labelUsuarios.setBackground(new Color(199, 235, 252));
 	    labelUsuarios.setHorizontalAlignment(SwingConstants.CENTER);
-	    labelUsuarios.setBounds(187, 25, 134, 28);
-	    labelUsuarios.setOpaque(true); // ¡Esto es clave!
+	    labelUsuarios.setBounds(144, 25, 134, 28);
+	    labelUsuarios.setOpaque(true); 
 	    panelMenuBar.add(labelUsuarios);
 	    
 	    JLabel labelEdificios = new JLabel("Edificios");
-	    labelEdificios.setOpaque(true);
 	    labelEdificios.setHorizontalAlignment(SwingConstants.CENTER);
 	    labelEdificios.setBackground(new Color(199, 235, 252));
-	    labelUsuarios.setOpaque(true); // ¡Esto es clave!
-	    labelEdificios.setBounds(365, 25, 134, 28);
+	    labelUsuarios.setOpaque(true); 
+	    labelEdificios.setBounds(267, 25, 134, 28);
 	    panelMenuBar.add(labelEdificios);
 	    
 	    JLabel lblReportes = new JLabel("Reportes");
@@ -136,9 +138,33 @@ public class mainInterfaceAdmin extends JFrame {
 	    lblReportes.setBackground(new Color(199, 235, 252));
 	    panelMenuBar.add(lblReportes);
 	    
+	    JLabel labelPrestamos = new JLabel("Historial Prestamos");
+	    labelPrestamos.setOpaque(true);
+	    labelPrestamos.setHorizontalAlignment(SwingConstants.CENTER);
+	    labelPrestamos.setBackground(new Color(199, 235, 252));
+	    labelPrestamos.setBounds(548, 25, 134, 28);
+	    panelMenuBar.add(labelPrestamos);
+	    
 	    Color colorNormal = new Color(199, 235, 252); // Color inicial
 	    Color colorHover = new Color(220, 220, 220);  // Color al pasar el mouse
+	    
 	   // Acciones de los label 
+	    labelPrestamos.addMouseListener(new MouseAdapter() {
+	    	@Override
+	    	public void mouseClicked(MouseEvent e) {
+	    		cardLayout.show(panelContenedor, "namePanePrestamos");
+	    	}
+	    	@Override
+	    	public void mouseEntered(MouseEvent e) {
+	    		labelPrestamos.setBackground(colorHover);
+	    		labelPrestamos.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    	}
+	    	@Override
+	    	public void mouseExited(MouseEvent e) {
+	    		labelPrestamos.setBackground(colorNormal);
+	    	}
+	    });
+	    
 	    
 	    lblReportes.addMouseListener(new MouseAdapter() {
 	    	@Override
