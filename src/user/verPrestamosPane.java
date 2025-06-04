@@ -4,10 +4,13 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 import util.UsuarioSesion;
+import java.util.Date;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -209,10 +212,46 @@ public class verPrestamosPane extends JPanel {
         ResultSet rs = null;
 
         try {
-            // 1. Establecer conexión
+            // === VALIDACIÓN DE FECHAS ===
+            SimpleDateFormat formato = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            formato.setLenient(false);
+
+            String fechaInicioStr = txtInicio.getText().trim();
+            String fechaFinStr = txtFin.getText().trim();
+
+            if (fechaInicioStr.isEmpty() || fechaFinStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Debe ingresar ambas fechas.");
+                return;
+            }
+
+            Date fechaInicio;
+            Date fechaFin;
+
+            try {
+                fechaInicio = (Date) formato.parse(fechaInicioStr);
+                fechaFin = (Date) formato.parse(fechaFinStr);
+
+                if (fechaInicio.after(fechaFin)) {
+                    JOptionPane.showMessageDialog(this, "La fecha de inicio debe ser anterior a la fecha de fin.");
+                    return;
+                }
+
+                Date ahora = new Date();
+
+				if (fechaInicio.getTime() < ahora.getTime()) {
+				    JOptionPane.showMessageDialog(this, "La fecha de inicio no puede ser en el pasado.");
+				    return;
+				}
+
+            } catch (ParseException ex) {
+                JOptionPane.showMessageDialog(this, "Formato de fecha incorrecto. Use: yyyy-MM-dd HH:mm:ss");
+                return;
+            }
+
+            // === CONEXIÓN E INSERCIÓN DE PRÉSTAMO ===
             con = util.ConexionBD.obtenerConexionAdmin();
 
-            // 2. Obtener nuevo ID usando secuencia Oracle
+            // 1. Obtener nuevo ID
             String getIdSql = "SELECT SEQ_REGISTROPRESTAMO.NEXTVAL FROM dual";
             ps = con.prepareStatement(getIdSql);
             rs = ps.executeQuery();
@@ -225,11 +264,11 @@ public class verPrestamosPane extends JPanel {
 
             if (nuevoIdPrestamo == -1) throw new SQLException("No se pudo obtener el ID del préstamo.");
 
-            // 3. Obtener ID del admin seleccionado
+            // 2. Obtener admin seleccionado
             String adminSeleccionado = (String) comboAdmin.getSelectedItem();
             int idAdmin = mapaAdmins.get(adminSeleccionado);
 
-            // 4. Insertar nuevo préstamo en la tabla RegistroPrestamo
+            // 3. Insertar en RegistroPrestamo
             String insertRegSql = "INSERT INTO AdminGestrorPrestamos.RegistroPrestamo " +
                     "(id, objetoSolicita, especialidad, FechaHoraInicio, FechaHoraFin, idSolicitante, idAdmin) " +
                     "VALUES (?, ?, ?, TO_DATE(?, 'YYYY-MM-DD HH24:MI:SS'), TO_DATE(?, 'YYYY-MM-DD HH24:MI:SS'), ?, ?)";
@@ -237,20 +276,20 @@ public class verPrestamosPane extends JPanel {
             ps.setInt(1, nuevoIdPrestamo);
             ps.setString(2, (String) comboObjeto.getSelectedItem());
             ps.setString(3, txtEspecialidad.getText());
-            ps.setString(4, txtInicio.getText());
-            ps.setString(5, txtFin.getText());
-            ps.setLong(6, idSolicitante); // asumido que es una variable de clase
+            ps.setString(4, fechaInicioStr); // Ya validado
+            ps.setString(5, fechaFinStr);
+            ps.setLong(6, idSolicitante);
             ps.setInt(7, idAdmin);
             ps.executeUpdate();
             ps.close();
 
-            // 5. Identificar tipo de objeto (Sala o Equipo) y su código
-            String seleccionado = (String) comboObjeto.getSelectedItem(); // Ejemplo: "Sala-101: Lab Redes"
-            String[] partes = seleccionado.split("[-:]"); // Separa por "-" y ":"
+            // 4. Obtener tipo de objeto y código
+            String seleccionado = (String) comboObjeto.getSelectedItem(); // Ej: "Sala-101: Lab Redes"
+            String[] partes = seleccionado.split("[-:]");
             String tipo = partes[0].trim();
             int codigo = Integer.parseInt(partes[1].trim());
 
-            // 6. Insertar en tabla específica según tipo
+            // 5. Insertar en tabla específica
             if (tipo.equalsIgnoreCase("Sala")) {
                 String insertSala = "INSERT INTO AdminGestrorPrestamos.PrestamoSala (id, idPrestamo, codigoSala) " +
                         "VALUES (SEQ_PRESTAMOSALA.NEXTVAL, ?, ?)";
@@ -267,21 +306,20 @@ public class verPrestamosPane extends JPanel {
                 ps.executeUpdate();
             }
 
-            ps.close(); con.close(); // Cierra recursos
-
-            // Confirmación al usuario
+            // Cerrar conexión y mostrar éxito
+            ps.close();
+            con.close();
             JOptionPane.showMessageDialog(this, "Préstamo registrado correctamente.");
-            cargarPrestamos(); // Refresca tabla de préstamos
+            cargarPrestamos(); // Refrescar tabla
 
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al registrar préstamo: " + e.getMessage());
             try {
-                if (con != null) con.rollback(); // Revierte cambios si hay error
+                if (con != null) con.rollback();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         } finally {
-            // Asegura el cierre de recursos
             try {
                 if (ps != null) ps.close();
                 if (con != null) con.close();
@@ -290,5 +328,4 @@ public class verPrestamosPane extends JPanel {
             }
         }
     }
-
 }
