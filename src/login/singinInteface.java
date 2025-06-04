@@ -3,12 +3,16 @@ package login;
 import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.border.EmptyBorder;
 
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import javax.swing.JTextField;
 import connectionFrames.connectFrames;
 
-import javax.swing.JTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -18,18 +22,21 @@ import java.awt.Image;
 import java.awt.Color;
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class singinInteface extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
-	private JTextField textFieldPassword;
+	private JPasswordField textFieldPassword;
 	private JLabel labelImg;
 	private JTextField textFieldCorreo;
 	private JTextField textFieldEdad;
 	private JTextField textFieldNombre;
 	private JTextField textFieldApellido;
 	private JTextField textFieldIdentificacion;
+	private JLabel ablContrasena;
 
 	/**
 	 * Launch the application.
@@ -62,7 +69,12 @@ public class singinInteface extends JFrame {
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
-		textFieldPassword = new JTextField("Escribe Contraseña ..." , 20);
+		ablContrasena = new JLabel("Contraseña: ");
+		ablContrasena.setFont(new Font("Trebuchet MS", Font.BOLD, 12));
+		ablContrasena.setBounds(451, 333, 85, 14);
+		contentPane.add(ablContrasena);
+		
+		textFieldPassword = new JPasswordField();
 		textFieldPassword.setBounds(451, 349, 151, 32);
 		textFieldPassword.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(217, 244, 253)));
 		contentPane.add(textFieldPassword);
@@ -84,26 +96,26 @@ public class singinInteface extends JFrame {
 		cargarImagenEnLabel(labelImg,"/img/logo.png", 95, 80);
 		contentPane.add(labelImg);
 		
-		textFieldCorreo = new JTextField("Escribe Correo ..." , 20);
+		textFieldCorreo = new JTextField();
 		textFieldCorreo.setColumns(10);
 		textFieldCorreo.setBounds(263, 234, 151, 32);
 		textFieldCorreo.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(217, 244, 253)));
 		contentPane.add(textFieldCorreo);
 		
-		textFieldEdad = new JTextField("Escribe Edad ..." , 20);
+		textFieldEdad = new JTextField();
 		textFieldEdad.setColumns(10);
 		textFieldEdad.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(217, 244, 253)));
 		textFieldEdad.setBounds(451, 290, 151, 32);
 		contentPane.add(textFieldEdad);
 		
-		textFieldNombre = new JTextField("Escribe Nombre ..." , 20);
+		textFieldNombre = new JTextField();
 		textFieldNombre.setColumns(10);
 		textFieldNombre.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(217, 244, 253)));
 		textFieldNombre.setBounds(451, 234, 151, 32);
 		contentPane.add(textFieldNombre);
 		
 		
-		textFieldApellido = new JTextField("Escribe Apellidos..." , 20);
+		textFieldApellido = new JTextField();
 		textFieldApellido.setColumns(10);
 		textFieldApellido.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(217, 244, 253)));
 		textFieldApellido.setBounds(263, 290, 151, 32);
@@ -138,16 +150,35 @@ public class singinInteface extends JFrame {
 		btnirInicioSesion.setBounds(654, 478, 179, 23);
 		contentPane.add(btnirInicioSesion);
 		
+		aplicarPlaceholder(textFieldCorreo, "Escribe Correo ...");
+		aplicarPlaceholder(textFieldNombre, "Escribe Nombre ...");
+		aplicarPlaceholder(textFieldApellido, "Escribe Apellidos...");
+		aplicarPlaceholder(textFieldEdad, "Escribe Edad ...");
+		aplicarPlaceholder(textFieldIdentificacion, "escribe tu documento...");
+		
 		btnRegistro.addActionListener(e -> {
+			
 		    String getIdentificacion = textFieldIdentificacion.getText().trim();
-		    int identificacion = Integer.parseInt(getIdentificacion);
+		    int identificacion;
+		    try {
+		        identificacion = Integer.parseInt(getIdentificacion);
+		    } catch (NumberFormatException ex) {
+		        JOptionPane.showMessageDialog(this, "La identificación debe ser un número válido.");
+		        return;
+		    }
+
 		    String correo = textFieldCorreo.getText().trim();
-		    String contrasenia = textFieldPassword.getText().trim();
+		    String contrasenia = new String(textFieldPassword.getPassword()).trim();
 		    String nombre = textFieldNombre.getText().trim();
 		    String apellido = textFieldApellido.getText().trim();
 		    String edadStr = textFieldEdad.getText().trim();
 		    String cargo = (String) comboBoxCargo.getSelectedItem();
-
+		    
+		    if (!correo.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+		        JOptionPane.showMessageDialog(this, "Ingrese un correo válido.");
+		        return;
+		    }
+		    
 		    // Validación básica
 		    if (getIdentificacion.isEmpty()||correo.isEmpty() || contrasenia.isEmpty() || nombre.isEmpty() || apellido.isEmpty() || edadStr.isEmpty() || "Selecciona Cargo ...".equals(cargo)) {
 		        javax.swing.JOptionPane.showMessageDialog(this, "Por favor complete todos los campos.");
@@ -209,6 +240,26 @@ public class singinInteface extends JFrame {
 		    }
 		});
 
+	}
+	
+	public void aplicarPlaceholder(JTextField campo, String placeholder) {
+	    campo.setText(placeholder);
+
+	    campo.addFocusListener(new FocusAdapter() {
+	        @Override
+	        public void focusGained(FocusEvent e) {
+	            if (campo.getText().equals(placeholder)) {
+	                campo.setText("");
+	            }
+	        }
+
+	        @Override
+	        public void focusLost(FocusEvent e) {
+	            if (campo.getText().isEmpty()) {
+	                campo.setText(placeholder);
+	            }
+	        }
+	    });
 	}
 	
 	public void cargarImagenEnLabel(JLabel label, String rutaInterna, int ancho, int alto) {

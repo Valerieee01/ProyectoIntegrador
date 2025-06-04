@@ -48,12 +48,21 @@ observaciones VARCHAR(255) CONSTRAINT sala_obs_nn NOT NULL,
 idEdificio NUMBER(20) CONSTRAINT sala_idEd_nn NOT NULL
 CONSTRAINT sala_idEd_fk REFERENCES Edificio(id));
 
+CREATE TABLE tipo_dispositivo (
+  id NUMBER PRIMARY KEY,
+  nombre VARCHAR2(50),
+  abreviacion VARCHAR2(10)
+);
+
 CREATE TABLE equipo_audiovisual
 (codigo NUMBER(20) CONSTRAINT equau_cod_pk PRIMARY KEY,
 nombre VARCHAR(50) CONSTRAINT equau_nom_nn NOT NULL,
 observaciones VARCHAR(255) CONSTRAINT equau_obs_nn NOT NULL,
-idEdificio NUMBER(20) CONSTRAINT equau_idEd_nn NOT NULL
-CONSTRAINT equau_idEd_fk REFERENCES Edificio(id));
+idEdificio NUMBER(20) CONSTRAINT equau_idEd_nn NOT NULL,
+CONSTRAINT equau_idEd_fk REFERENCES Edificio(id),
+tipo NUMBER NOT NULL, 
+CONSTRAINT fk_tipo FOREIGN KEY (tipo) REFERENCES tipo_dispositivo(id)
+);
 
 CREATE TABLE PrestamoSala
 (id NUMBER(20) CONSTRAINT prsa_id_pk PRIMARY KEY,
@@ -409,6 +418,14 @@ BEGIN
     END IF;
 END;
 /
+---------------------------------------------------
+PERMISOS DE USUARIOS DE LA BASE DE DATOS
+
+-AdminGestrorPrestamos 
+
+-solicitanteGestorPrestamos
+
+
 ---------------------------------------------------
 SOLICITANTES
 

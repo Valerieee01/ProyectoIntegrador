@@ -13,8 +13,17 @@ public class UsuarioSesion {
         correo = correoUsuario;
     }
 
-    public static Long getIdentificacion() {
+
+    public static void setIdentificacion(long id) {
+        identificacion = id;
+    }
+
+    public static long getIdentificacion() {
         return identificacion;
+    }
+
+    public static void setNombre(String nom) {
+        nombre = nom;
     }
 
     public static String getNombre() {
@@ -35,4 +44,8 @@ public class UsuarioSesion {
         apellido = null;
         correo = null;
     }
+
+
+	
+	
 }

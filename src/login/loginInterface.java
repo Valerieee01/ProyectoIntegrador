@@ -5,7 +5,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.border.EmptyBorder;
-
 import admin.mainInterfaceAdmin;
 
 import java.awt.Font;
@@ -17,6 +16,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import java.awt.Color;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,6 +26,7 @@ import java.awt.event.ActionEvent;
 /*Importacion clases**/
 import connectionFrames.connectFrames;
 import user.mainInterfaceUser;
+import util.UsuarioSesion;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -77,7 +79,7 @@ public class loginInterface extends JFrame {
 		cargarImagenEnLabel(labelImg,"/img/logo.png", 95, 80);
 		contentPane.add(labelImg);
 		
-		textFieldCorreo = new JTextField("Escribe Correo ..." , 20);
+		textFieldCorreo = new JTextField();
 		textFieldCorreo.setColumns(10);
 		textFieldCorreo.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(217, 244, 253)));
 		textFieldCorreo.setBounds(335, 277, 151, 32);
@@ -88,6 +90,8 @@ public class loginInterface extends JFrame {
 		textFieldPassword.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(217, 244, 253)));
 		textFieldPassword.setBounds(335, 372, 151, 32);
 		contentPane.add(textFieldPassword);
+		
+		aplicarPlaceholder(textFieldCorreo, "Escribe Correo ...");
 		
 		JButton btnInicioSesion = new JButton("Iniciar Sesion");
 		btnInicioSesion.addActionListener(new ActionListener() {
@@ -131,6 +135,8 @@ public class loginInterface extends JFrame {
 		                    pstSolicitante.setString(2, password);
 		                    ResultSet rsSolicitante = pstSolicitante.executeQuery();
 		                    if (rsSolicitante.next()) {
+		                    	UsuarioSesion.setIdentificacion(rsSolicitante.getLong("identificacion"));
+		                    	UsuarioSesion.setNombre(rsSolicitante.getString("nombre"));
 		                        Long id = rsSolicitante.getLong("identificacion");
 		                        String nombre = rsSolicitante.getString("nombre");
 		                        String apellido = rsSolicitante.getString("apellido");
@@ -185,6 +191,27 @@ public class loginInterface extends JFrame {
 		labelnicioSesion.setFont(new Font("Sylfaen", Font.ITALIC, 17));
 		labelnicioSesion.setBounds(353, 234, 120, 32);
 		contentPane.add(labelnicioSesion);
+	}
+	
+	
+	public void aplicarPlaceholder(JTextField campo, String placeholder) {
+	    campo.setText(placeholder);
+
+	    campo.addFocusListener(new FocusAdapter() {
+	        @Override
+	        public void focusGained(FocusEvent e) {
+	            if (campo.getText().equals(placeholder)) {
+	                campo.setText("");
+	            }
+	        }
+
+	        @Override
+	        public void focusLost(FocusEvent e) {
+	            if (campo.getText().isEmpty()) {
+	                campo.setText(placeholder);
+	            }
+	        }
+	    });
 	}
 	
 	public void cargarImagenEnLabel(JLabel label, String rutaInterna, int ancho, int alto) {
