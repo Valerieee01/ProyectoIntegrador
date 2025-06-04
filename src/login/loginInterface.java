@@ -5,6 +5,9 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.border.EmptyBorder;
+
+import admin.mainInterfaceAdmin;
+
 import java.awt.Font;
 import java.awt.Image;
 import javax.swing.SwingConstants;
@@ -14,10 +17,14 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import java.awt.Color;
 import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.awt.event.ActionEvent;
 
 /*Importacion clases**/
 import connectionFrames.connectFrames;
+import user.mainInterfaceUser;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -84,18 +91,64 @@ public class loginInterface extends JFrame {
 		
 		JButton btnInicioSesion = new JButton("Iniciar Sesion");
 		btnInicioSesion.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				String correo = textFieldCorreo.getText();
-				char[] contrasenaChars = textFieldPassword.getPassword();
-				String password = new String(contrasenaChars);
+		    public void actionPerformed(ActionEvent e) {
+		        String correo = textFieldCorreo.getText().trim();
+		        String password = new String(textFieldPassword.getPassword()).trim();
 
-				if(!correo.isEmpty() && !password.isEmpty()) {
-					connectFrames.AbrirFrameInitUser(loginInterface.this);
-				}else {
-					JOptionPane.showMessageDialog(null, "Todos los campos deben estar llenos");
-				}
-			}
+		        if (!correo.isEmpty() && !password.isEmpty()) {
+		            try (Connection conn = util.ConexionBD.obtenerConexionAdmin()) {
+
+		                // Verificar en AdministradorSoftware
+		                String queryAdmin = "SELECT nombre FROM AdministradorSoftware WHERE correo = ? AND contrasenia = ?";
+		                try (PreparedStatement pstAdmin = conn.prepareStatement(queryAdmin)) {
+		                    pstAdmin.setString(1, correo);
+		                    pstAdmin.setString(2, password);
+		                    ResultSet rsAdmin = pstAdmin.executeQuery();
+
+		                    if (rsAdmin.next()) {
+		                        String nombre = rsAdmin.getString("nombre");
+		                        JOptionPane.showMessageDialog(null, "Bienvenido Administrador: " + nombre);
+
+		                        // Abrir ventana de administrador
+		                        mainInterfaceAdmin adminFrame = new mainInterfaceAdmin();
+		                        adminFrame.setVisible(true);
+		                        dispose(); // cerrar login
+		                        return;
+		                    }
+		                }
+
+		                // Verificar en solicitante
+		                String querySolicitante = "SELECT nombre FROM solicitante WHERE correo = ? AND contrasenia = ?";
+		                try (PreparedStatement pstSolicitante = conn.prepareStatement(querySolicitante)) {
+		                    pstSolicitante.setString(1, correo);
+		                    pstSolicitante.setString(2, password);
+		                    ResultSet rsSolicitante = pstSolicitante.executeQuery();
+
+		                    if (rsSolicitante.next()) {
+		                        String nombre = rsSolicitante.getString("nombre");
+		                        JOptionPane.showMessageDialog(null, "Bienvenido Solicitante: " + nombre);
+
+		                        // Abrir ventana de solicitante
+		                        mainInterfaceUser userFrame = new mainInterfaceUser();
+		                        userFrame.setVisible(true);
+		                        dispose(); // cerrar login
+		                        return;
+		                    }
+		                }
+
+		                // Si no se encontró en ninguna tabla
+		                JOptionPane.showMessageDialog(null, "Correo o contraseña incorrectos.");
+
+		            } catch (Exception ex) {
+		                JOptionPane.showMessageDialog(null, "Error de conexión:\n" + ex.getMessage());
+		                ex.printStackTrace();
+		            }
+		        } else {
+		            JOptionPane.showMessageDialog(null, "Todos los campos deben estar llenos.");
+		        }
+		    }
 		});
+
 		btnInicioSesion.setBackground(new Color(217, 244, 253));
 		btnInicioSesion.setBounds(353, 431, 120, 23);
 		contentPane.add(btnInicioSesion);

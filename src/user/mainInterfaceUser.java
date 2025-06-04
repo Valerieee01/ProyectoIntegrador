@@ -69,8 +69,7 @@ public class mainInterfaceUser extends JFrame {
 	    contentPane.add(panelContenedor);
 	    
 	    // Instanciar los paneles
-	    panePrestmosSalas panePrestamosSalas = new panePrestmosSalas();
-	    panePrestamosEquipos panelPrestamosEquipos = new panePrestamosEquipos();
+	    verPrestamosPane verPrestamosPane = new verPrestamosPane();
 	    paneHistorialPrestamos panelHistorialPrestamos = new paneHistorialPrestamos();
 
 	    // Crear panel de bienvenida
@@ -83,8 +82,7 @@ public class mainInterfaceUser extends JFrame {
 
 	    // Añadirlos al contenedor con una clave
 	    panelContenedor.add(panelBienvenida, "panelBienvenida");
-	    panelContenedor.add(panePrestamosSalas, "namePaneSalas");
-	    panelContenedor.add(panelPrestamosEquipos, "namePaneEquipos");
+	    panelContenedor.add(verPrestamosPane, "namePaneSalas");
 	    panelContenedor.add(panelHistorialPrestamos, "namePaneHistorial");
 
 	    // Mostrar el panel de bienvenida al inicio
@@ -97,63 +95,44 @@ public class mainInterfaceUser extends JFrame {
 	    panelMenuBar.setBounds(0, 0, 843, 64);
 	    contentPane.add(panelMenuBar);
 	    panelMenuBar.setLayout(null);
-
-		JLabel LabelPrestamoSalas = new JLabel("Prestamos de Salas ");
-		LabelPrestamoSalas.setBounds(83, 25, 134, 28);
-		LabelPrestamoSalas.setBackground(new Color(199, 235, 252));
-		LabelPrestamoSalas.setOpaque(true); // ¡Esto es clave!	
-		LabelPrestamoSalas.setHorizontalAlignment(SwingConstants.CENTER);
-		panelMenuBar.add(LabelPrestamoSalas);
 		
-		JLabel lblPrestamoDeAudiovisuales = new JLabel("Prestamo de Audiovisuales");
-		lblPrestamoDeAudiovisuales.setOpaque(true); // ¡Esto es clave!
-		lblPrestamoDeAudiovisuales.setBackground(new Color(199, 235, 252));
-		lblPrestamoDeAudiovisuales.setBounds(348, 25, 169, 28);
-		lblPrestamoDeAudiovisuales.setHorizontalAlignment(SwingConstants.CENTER);
-		panelMenuBar.add(lblPrestamoDeAudiovisuales);
+	    JLabel labelSolicitarPrestamos = new JLabel("SolicitarPrestamos");
+	    labelSolicitarPrestamos.setBackground(new Color(199, 235, 252));
+	    labelSolicitarPrestamos.setHorizontalAlignment(SwingConstants.CENTER);
+	    labelSolicitarPrestamos.setBounds(562, 25, 134, 28);
+	    labelSolicitarPrestamos.setOpaque(true); // ¡Esto es clave!
+	    panelMenuBar.add(labelSolicitarPrestamos);
+	    
 		
 		JLabel labelHistorialPrestamos = new JLabel("Historial Prestamos");
 		labelHistorialPrestamos.setOpaque(true); // ¡Esto es clave!
-		labelHistorialPrestamos.setBounds(633, 25, 134, 28);
+		labelHistorialPrestamos.setBounds(122, 25, 134, 28);
 		labelHistorialPrestamos.setBackground(new Color(199, 235, 252));
 		labelHistorialPrestamos.setHorizontalAlignment(SwingConstants.CENTER);
 		panelMenuBar.add(labelHistorialPrestamos);
 		
 		Color colorNormal = new Color(199, 235, 252); // Color inicial
 		Color colorHover = new Color(220, 220, 220);  // Color al pasar el mouse
+		
+		
 
 		// Acciones para label menu
-		LabelPrestamoSalas.addMouseListener(new MouseAdapter() {
-		    @Override
-		    public void mouseClicked(MouseEvent e) {
-		        cardLayout.show(panelContenedor, "namePaneSalas");
-		    }
-		    @Override
-		    public void mouseEntered(MouseEvent e) {
-		        LabelPrestamoSalas.setBackground(colorHover);
-		        LabelPrestamoSalas.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		    }
-		    @Override
-		    public void mouseExited(MouseEvent e) {
-		        LabelPrestamoSalas.setBackground(colorNormal);
-		    }
-		});
-
-		lblPrestamoDeAudiovisuales.addMouseListener(new MouseAdapter() {
-		    @Override
-		    public void mouseClicked(MouseEvent e) {
-		        cardLayout.show(panelContenedor, "namePaneEquipos");
-		    }
-		    @Override
-		    public void mouseEntered(MouseEvent e) {
-		        lblPrestamoDeAudiovisuales.setBackground(colorHover);
-		        lblPrestamoDeAudiovisuales.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		    }
-		    @Override
-		    public void mouseExited(MouseEvent e) {
-		        lblPrestamoDeAudiovisuales.setBackground(colorNormal);
-		    }
-		});
+		
+		  labelSolicitarPrestamos.addMouseListener(new MouseAdapter() {
+		    	@Override
+		    	public void mouseClicked(MouseEvent e) {
+		    		cardLayout.show(panelContenedor, "namePaneSalas");
+		    	}
+		    	@Override
+		    	public void mouseEntered(MouseEvent e) {
+		    		labelSolicitarPrestamos.setBackground(colorHover);
+		    		labelSolicitarPrestamos.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		    	}
+		    	@Override
+		    	public void mouseExited(MouseEvent e) {
+		    		labelSolicitarPrestamos.setBackground(colorNormal);
+		    	}
+		    });
 
 		labelHistorialPrestamos.addMouseListener(new MouseAdapter() {
 		    @Override

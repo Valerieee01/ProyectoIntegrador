@@ -16,7 +16,7 @@ public class verUsuariosPane extends JPanel {
 
     public verUsuariosPane() {
         setLayout(null);
-        setBackground(new Color(240, 240, 240));
+        setBackground(new Color(255, 255, 183));
 
         JLabel lblTitulo = new JLabel("Gestión de Usuarios");
         lblTitulo.setFont(new Font("Tahoma", Font.BOLD, 18));
@@ -49,10 +49,12 @@ public class verUsuariosPane extends JPanel {
         }
 
         JButton btnModificar = new JButton("Modificar");
+        btnModificar.setBackground(new Color(174, 215, 255));
         btnModificar.setBounds(350, 50, 100, 25);
         add(btnModificar);
 
         JButton btnEliminar = new JButton("Eliminar");
+        btnEliminar.setBackground(new Color(174, 215, 255));
         btnEliminar.setBounds(460, 50, 100, 25);
         add(btnEliminar);
 

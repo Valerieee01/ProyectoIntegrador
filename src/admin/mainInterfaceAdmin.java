@@ -12,6 +12,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+import user.verPrestamosPane;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -65,6 +66,8 @@ public class mainInterfaceAdmin extends JFrame {
 	    verPrestamosPane verPrestamosPane = new verPrestamosPane();
 	    verUsuariosPane verUsuariosPane = new verUsuariosPane();
 	    crearEdificios crearEdificios = new crearEdificios();
+	    crearReportesPane crearReportesPane = new crearReportesPane();
+
 
 
 	    // Crear panel de bienvenida
@@ -82,13 +85,13 @@ public class mainInterfaceAdmin extends JFrame {
 	    panelContenedor.add(crearEquiposPane, "namePaneCrearEquipos");
 	    panelContenedor.add(verUsuariosPane, "namePaneVerUsuarios");
 	    panelContenedor.add(crearEdificios, "namePanecrearEdificios");
+	    panelContenedor.add(crearReportesPane, "namePanecrearReportesPane");
+
 
 
 	    // Mostrar el panel de bienvenida al inicio
 	    cardLayout.show(panelContenedor, "panelBienvenida");
 	    
-		Color colorNormal = new Color(199, 235, 252); // Color inicial
-		Color colorHover = new Color(220, 220, 220);  // Color al pasar el mouse
 
 	    
 	    JPanel panelMenuBar = new JPanel();
@@ -107,16 +110,9 @@ public class mainInterfaceAdmin extends JFrame {
 	    JLabel labelCrearSalas = new JLabel("Salas");
 	    labelCrearSalas.setBackground(new Color(199, 235, 252));
 	    labelCrearSalas.setHorizontalAlignment(SwingConstants.CENTER);
-	    labelCrearSalas.setBounds(492, 25, 169, 28);
+	    labelCrearSalas.setBounds(509, 25, 169, 28);
 	    labelCrearSalas.setOpaque(true); // ¡Esto es clave! 
 	    panelMenuBar.add(labelCrearSalas);
-	    
-	    JLabel labelPrestamos = new JLabel("Prestamos");
-	    labelPrestamos.setBackground(new Color(199, 235, 252));
-	    labelPrestamos.setHorizontalAlignment(SwingConstants.CENTER);
-	    labelPrestamos.setBounds(671, 25, 134, 28);
-	    labelPrestamos.setOpaque(true); // ¡Esto es clave!
-	    panelMenuBar.add(labelPrestamos);
 	    
 	    JLabel labelUsuarios = new JLabel("Usuarios");
 	    labelUsuarios.setBackground(new Color(199, 235, 252));
@@ -130,10 +126,36 @@ public class mainInterfaceAdmin extends JFrame {
 	    labelEdificios.setHorizontalAlignment(SwingConstants.CENTER);
 	    labelEdificios.setBackground(new Color(199, 235, 252));
 	    labelUsuarios.setOpaque(true); // ¡Esto es clave!
-	    labelEdificios.setBounds(347, 25, 134, 28);
+	    labelEdificios.setBounds(365, 25, 134, 28);
 	    panelMenuBar.add(labelEdificios);
 	    
+	    JLabel lblReportes = new JLabel("Reportes");
+	    lblReportes.setBounds(692, 25, 105, 28);
+	    lblReportes.setOpaque(true);
+	    lblReportes.setHorizontalAlignment(SwingConstants.CENTER);
+	    lblReportes.setBackground(new Color(199, 235, 252));
+	    panelMenuBar.add(lblReportes);
+	    
+	    Color colorNormal = new Color(199, 235, 252); // Color inicial
+	    Color colorHover = new Color(220, 220, 220);  // Color al pasar el mouse
 	   // Acciones de los label 
+	    
+	    lblReportes.addMouseListener(new MouseAdapter() {
+	    	@Override
+	    	public void mouseClicked(MouseEvent e) {
+	    		cardLayout.show(panelContenedor, "namePanecrearReportesPane");
+	    	}
+	    	@Override
+	    	public void mouseEntered(MouseEvent e) {
+	    		lblReportes.setBackground(colorHover);
+	    		lblReportes.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    	}
+	    	@Override
+	    	public void mouseExited(MouseEvent e) {
+	    		lblReportes.setBackground(colorNormal);
+	    	}
+	    });
+	    
 	    labelEdificios.addMouseListener(new MouseAdapter() {
 	    	@Override
 	    	public void mouseClicked(MouseEvent e) {
@@ -165,21 +187,7 @@ public class mainInterfaceAdmin extends JFrame {
 	    	}
 	    });
 	    
-	    labelPrestamos.addMouseListener(new MouseAdapter() {
-	    	@Override
-	    	public void mouseClicked(MouseEvent e) {
-	    		cardLayout.show(panelContenedor, "namePaneVerPrestamos");
-	    	}
-	    	@Override
-	    	public void mouseEntered(MouseEvent e) {
-	    		labelPrestamos.setBackground(colorHover);
-	    		labelPrestamos.setCursor(new Cursor(Cursor.HAND_CURSOR));
-	    	}
-	    	@Override
-	    	public void mouseExited(MouseEvent e) {
-	    		labelPrestamos.setBackground(colorNormal);
-	    	}
-	    });
+	  
 	    
 	    
 	    labelUsuarios.addMouseListener(new MouseAdapter() {

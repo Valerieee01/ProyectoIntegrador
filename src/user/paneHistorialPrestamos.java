@@ -6,7 +6,15 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
 import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 
@@ -16,6 +24,8 @@ import userClass.BotonRenderer;
 public class paneHistorialPrestamos extends JPanel {
 
 	private static final long serialVersionUID = 1L;
+	private static DefaultTableModel modelo;
+	private static JTable tabla;
 
 	/**
 	 * Create the panel.
@@ -27,36 +37,144 @@ public class paneHistorialPrestamos extends JPanel {
 
 	    String[] columnas = {"ID", "Elemento", "Fecha Inicio", "Fecha Fin", "Estado", "Acciones"};
 	    Object[][] datos = {
-	        {1, "Libro: Java Básico", "2025-05-01", "2025-06-01", "Activo", null},
-	        {2, "Tablet Samsung", "2025-04-15", "2025-05-15", "Finalizado", null},
-	        {3, "Proyector Epson", "2025-05-20", "2025-06-10", "Activo", null},
-	        {1, "Libro: Java Básico", "2025-05-01", "2025-06-01", "Activo", null},
-	        {2, "Tablet Samsung", "2025-04-15", "2025-05-15", "Finalizado", null},
-	        {1, "Libro: Java Básico", "2025-05-01", "2025-06-01", "Activo", null},
-	        {2, "Tablet Samsung", "2025-04-15", "2025-05-15", "Finalizado", null},
-	        {1, "Libro: Java Básico", "2025-05-01", "2025-06-01", "Activo", null},
-	        {2, "Tablet Samsung", "2025-04-15", "2025-05-15", "Finalizado", null},
-	        {1, "Libro: Java Básico", "2025-05-01", "2025-06-01", "Activo", null},
-	        {2, "Tablet Samsung", "2025-04-15", "2025-05-15", "Finalizado", null},   {1, "Libro: Java Básico", "2025-05-01", "2025-06-01", "Activo", null},
-	        {2, "Tablet Samsung", "2025-04-15", "2025-05-15", "Finalizado", null},   {1, "Libro: Java Básico", "2025-05-01", "2025-06-01", "Activo", null},
-	        {2, "Tablet Samsung", "2025-04-15", "2025-05-15", "Finalizado", null},   {1, "Libro: Java Básico", "2025-05-01", "2025-06-01", "Activo", null},
-	        {2, "Tablet Samsung", "2025-04-15", "2025-05-15", "Finalizado", null},
+
 	    };
 	
-	    DefaultTableModel modelo = new DefaultTableModel(datos, columnas) {
+	    modelo = new DefaultTableModel(datos, columnas) {
 	        @Override
 	        public boolean isCellEditable(int row, int column) {
 	            return column == 5; // Solo columna de acciones editable
 	        }
 	    };
 	
-	    JTable tabla = new JTable(modelo);
+	    tabla = new JTable(modelo);
 	    tabla.setRowHeight(40);
 	    tabla.getColumn("Acciones").setCellRenderer(new BotonRenderer());
 	    tabla.getColumn("Acciones").setCellEditor(new BotonEditor(new JCheckBox()));
 	
 	    JScrollPane scroll = new JScrollPane(tabla);
 	    add(scroll, BorderLayout.CENTER);
+	    cargarPrestamosDesdeBD();
+	}
+	
+	public void cargarPrestamosDesdeBD() {
+	    try (Connection conn = util.ConexionBDSoli.obtenerConexionSolicitante()) {
+	        String sql = """
+	            SELECT rp.id, rp.objetoSolicita, rp.FechaHoraInicio, rp.FechaHoraFin,
+	                   rpp.estadoPrestamo
+	            FROM AdminGestrorPrestamos.RegistroPrestamo rp
+	            JOIN AdminGestrorPrestamos.ReportesPrestamo rpp ON rp.id = rpp.idPrestamo
+	            ORDER BY rp.FechaHoraInicio DESC
+	        """;
+
+	        PreparedStatement stmt = conn.prepareStatement(sql);
+	        ResultSet rs = stmt.executeQuery();
+
+	        modelo.setRowCount(0); // Limpiar tabla
+
+	        while (rs.next()) {
+	            Object[] fila = {
+	                rs.getLong("id"),
+	                rs.getString("objetoSolicita"),
+	                rs.getDate("FechaHoraInicio"),
+	                rs.getDate("FechaHoraFin"),
+	                rs.getString("estadoPrestamo"),
+	                "Editar / Eliminar"
+	            };
+	            modelo.addRow(fila);
+	        }
+
+	    } catch (SQLException e) {
+	        JOptionPane.showMessageDialog(this, "Error al cargar los préstamos: " + e.getMessage());
+	    }
+	}
+	
+	public void actionPerformed(ActionEvent e) {
+	    int fila = tabla.getSelectedRow();
+	    Long idPrestamo = (Long) tabla.getValueAt(fila, 0);
+
+	    String[] opciones = {"Editar", "Eliminar"};
+	    int eleccion = JOptionPane.showOptionDialog(tabla,
+	        "¿Qué desea hacer con el préstamo ID: " + idPrestamo + "?",
+	        "Acción",
+	        JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+	        opciones, opciones[0]);
+
+	    if (eleccion == 0) { // Editar
+	        editarPrestamo(idPrestamo);
+	    } else if (eleccion == 1) { // Eliminar
+	        eliminarPrestamo(idPrestamo);
+	    }
+	}
+
+	public void editarPrestamo(Long idPrestamo) {
+	    String nuevaFechaInicio = JOptionPane.showInputDialog("Nueva Fecha Inicio (YYYY-MM-DD):");
+	    String nuevaFechaFin = JOptionPane.showInputDialog("Nueva Fecha Fin (YYYY-MM-DD):");
+	    String nuevoEstado = JOptionPane.showInputDialog("Nuevo Estado (Activo, Finalizado, etc):");
+
+	    try (Connection conn = util.ConexionBDSoli.obtenerConexionSolicitante()) {
+	        String update1 = "UPDATE AdminGestrorPrestamos.RegistroPrestamo SET FechaHoraInicio = ?, FechaHoraFin = ? WHERE id = ?";
+	        String update2 = "UPDATE AdminGestrorPrestamos.ReportesPrestamo SET estadoPrestamo = ? WHERE idPrestamo = ?";
+
+	        try (PreparedStatement ps1 = conn.prepareStatement(update1);
+	             PreparedStatement ps2 = conn.prepareStatement(update2)) {
+
+	            ps1.setDate(1, Date.valueOf(nuevaFechaInicio));
+	            ps1.setDate(2, Date.valueOf(nuevaFechaFin));
+	            ps1.setLong(3, idPrestamo);
+	            ps1.executeUpdate();
+
+	            ps2.setString(1, nuevoEstado);
+	            ps2.setLong(2, idPrestamo);
+	            ps2.executeUpdate();
+
+	            JOptionPane.showMessageDialog(null, "Préstamo actualizado correctamente.");
+	            cargarPrestamosDesdeBD();
+	        }
+
+	    } catch (SQLException ex) {
+	        JOptionPane.showMessageDialog(null, "Error al editar: " + ex.getMessage());
+	    }
+	}
+
+	
+	public void eliminarPrestamo(Long idPrestamo) {
+	    int confirmar = JOptionPane.showConfirmDialog(null,
+	        "¿Estás seguro de eliminar el préstamo ID: " + idPrestamo + "?", "Confirmar",
+	        JOptionPane.YES_NO_OPTION);
+
+	    if (confirmar == JOptionPane.YES_OPTION) {
+	        try (Connection conn = util.ConexionBDSoli.obtenerConexionSolicitante()) {
+	            conn.setAutoCommit(false);
+
+	            String deleteReporte = "DELETE FROM AdminGestrorPrestamos.ReportesPrestamo WHERE idPrestamo = ?";
+	            String deleteSala = "DELETE FROM AdminGestrorPrestamos.PrestamoSala WHERE idPrestamo = ?";
+	            String deleteEquipo = "DELETE FROM AdminGestrorPrestamos.PrestamoEquipo WHERE idPrestamo = ?";
+	            String deleteRegistro = "DELETE FROM AdminGestrorPrestamos.RegistroPrestamo WHERE id = ?";
+
+	            try (
+	                PreparedStatement ps1 = conn.prepareStatement(deleteReporte);
+	                PreparedStatement ps2 = conn.prepareStatement(deleteSala);
+	                PreparedStatement ps3 = conn.prepareStatement(deleteEquipo);
+	                PreparedStatement ps4 = conn.prepareStatement(deleteRegistro)
+	            ) {
+	                ps1.setLong(1, idPrestamo); ps1.executeUpdate();
+	                ps2.setLong(1, idPrestamo); ps2.executeUpdate();
+	                ps3.setLong(1, idPrestamo); ps3.executeUpdate();
+	                ps4.setLong(1, idPrestamo); ps4.executeUpdate();
+
+	                conn.commit();
+	                JOptionPane.showMessageDialog(null, "Préstamo eliminado correctamente.");
+	                cargarPrestamosDesdeBD();
+	            } catch (SQLException e) {
+	                conn.rollback();
+	                throw e;
+	            }
+
+	        } catch (SQLException ex) {
+	            JOptionPane.showMessageDialog(null, "Error al eliminar: " + ex.getMessage());
+	        }
+	    }
 	}
 
 }

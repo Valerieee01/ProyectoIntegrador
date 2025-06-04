@@ -20,7 +20,7 @@ public class crearEdificios extends JPanel {
 
     public crearEdificios() {
         setLayout(null);
-        setBackground(new Color(240, 240, 240));
+        setBackground(new Color(255, 255, 187));
 
         JLabel lblTitulo = new JLabel("Gestión de Edificios");
         lblTitulo.setFont(new Font("Tahoma", Font.BOLD, 18));
@@ -36,14 +36,17 @@ public class crearEdificios extends JPanel {
         add(txtNombre);
 
         btnAgregar = new JButton("Agregar");
+        btnAgregar.setBackground(new Color(187, 221, 255));
         btnAgregar.setBounds(320, 78, 100, 25);
         add(btnAgregar);
 
         btnModificar = new JButton("Modificar");
+        btnModificar.setBackground(new Color(187, 221, 255));
         btnModificar.setBounds(430, 78, 100, 25);
         add(btnModificar);
 
         btnEliminar = new JButton("Eliminar");
+        btnEliminar.setBackground(new Color(187, 221, 255));
         btnEliminar.setBounds(540, 78, 100, 25);
         add(btnEliminar);
 
