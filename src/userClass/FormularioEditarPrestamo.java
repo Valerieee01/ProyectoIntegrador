@@ -10,7 +10,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 
-class FormularioEditarPrestamo extends JDialog {
+public class FormularioEditarPrestamo extends JDialog {
 	 private JTextField txtElemento, txtFechaInicio, txtFechaFin, txtEstado;
 	    private JButton btnGuardar;
 	    private int filaEditar;

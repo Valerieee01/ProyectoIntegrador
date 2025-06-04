@@ -1,0 +1,491 @@
+CRUD
+
+Creación de tablas
+
+CREATE TABLE AdministradorSoftware
+(identificacion NUMBER(20) CONSTRAINT adm_iden_pk PRIMARY KEY,
+correo VARCHAR(100) CONSTRAINT adm_cor_nn NOT NULL,
+contrasenia VARCHAR(20) CONSTRAINT adm_con_nn NOT NULL,
+nombre VARCHAR(50) CONSTRAINT adm_nom_nn NOT NULL,
+apellido VARCHAR(50) CONSTRAINT adm_ape_nn NOT NULL,
+edad NUMBER(3) CONSTRAINT adm_edad_nn NOT NULL);
+
+CREATE TABLE solicitante
+(identificacion NUMBER(20) CONSTRAINT sol_iden_pk PRIMARY KEY,
+correo VARCHAR(100) CONSTRAINT sol_cor_nn NOT NULL,
+contrasenia VARCHAR(20) CONSTRAINT sol_con_nn NOT NULL,
+nombre VARCHAR(50) CONSTRAINT sol_nom_nn NOT NULL,
+apellido VARCHAR(50) CONSTRAINT sol_ape_nn NOT NULL,
+edad NUMBER(3) CONSTRAINT sol_edad_nn NOT NULL,
+cargo VARCHAR(50) CONSTRAINT sol_car_nn NOT NULL);
+
+CREATE TABLE RegistroPrestamo
+(id NUMBER(20) CONSTRAINT regpr_id_pk PRIMARY KEY,
+objetoSolicita VARCHAR(255) CONSTRAINT regpr_obj_nn NOT NULL,
+especialidad VARCHAR(255),
+FechaHoraInicio DATE CONSTRAINT regpr_fhi_nn NOT NULL,
+FechaHoraFin DATE CONSTRAINT regpr_fhf_nn NOT NULL,
+idSolicitante NUMBER(20) CONSTRAINT regpr_idSol_nn NOT NULL
+CONSTRAINT regpr_idSol_fk REFERENCES solicitante(identificacion),
+idAdmin NUMBER(20) CONSTRAINT regpr_idAd_nn NOT NULL
+CONSTRAINT regpr_idAd_fk REFERENCES AdministradorSoftware(identificacion));
+
+CREATE TABLE ReportesPrestamo
+(id NUMBER(20) CONSTRAINT repr_id_pk PRIMARY KEY,
+estadoPrestamo VARCHAR(50) CONSTRAINT repr_estpr_nn NOT NULL,
+correoSolicitante VARCHAR(100) CONSTRAINT repr_cosol_nn NOT NULL,
+idPrestamo NUMBER(20) CONSTRAINT repr_idpr_nn NOT NULL
+CONSTRAINT repr_idpr_uk UNIQUE, 
+CONSTRAINT repr_idpr_fk FOREIGN KEY(idPrestamo) REFERENCES RegistroPrestamo(id));
+
+CREATE TABLE edificio
+(id NUMBER(20) CONSTRAINT edi_id_pk PRIMARY KEY,
+nombre VARCHAR(50) CONSTRAINT edi_nom_nn NOT NULL);
+
+CREATE TABLE sala_informatica
+(codigo NUMBER(20) CONSTRAINT sala_cod_pk PRIMARY KEY,
+observaciones VARCHAR(255) CONSTRAINT sala_obs_nn NOT NULL,
+idEdificio NUMBER(20) CONSTRAINT sala_idEd_nn NOT NULL
+CONSTRAINT sala_idEd_fk REFERENCES Edificio(id));
+
+CREATE TABLE equipo_audiovisual
+(codigo NUMBER(20) CONSTRAINT equau_cod_pk PRIMARY KEY,
+nombre VARCHAR(50) CONSTRAINT equau_nom_nn NOT NULL,
+observaciones VARCHAR(255) CONSTRAINT equau_obs_nn NOT NULL,
+idEdificio NUMBER(20) CONSTRAINT equau_idEd_nn NOT NULL
+CONSTRAINT equau_idEd_fk REFERENCES Edificio(id));
+
+CREATE TABLE PrestamoSala
+(id NUMBER(20) CONSTRAINT prsa_id_pk PRIMARY KEY,
+idPrestamo NUMBER(20) CONSTRAINT prsa_idpr_nn NOT NULL
+CONSTRAINT prsa_idpr_fk REFERENCES RegistroPrestamo(id),
+codigoSala NUMBER(20) CONSTRAINT prsa_codsal_nn NOT NULL
+CONSTRAINT prsa_codsal_fk REFERENCES sala_informatica(codigo));
+
+CREATE TABLE PrestamoEquipo
+(id NUMBER(20) CONSTRAINT preq_id_pk PRIMARY KEY,
+idPrestamo NUMBER(20) CONSTRAINT preq_idpr_nn NOT NULL
+CONSTRAINT preq_idpr_fk REFERENCES RegistroPrestamo(id),
+codigoEquipo NUMBER(20) CONSTRAINT preq_codsal_nn NOT NULL
+CONSTRAINT preq_codsal_fk REFERENCES equipo_audiovisual(codigo));
+
+-------------------------------------------------------------------------------------
+
+INSERTAR DATOS
+
+INSERT INTO AdministradorSoftware
+VALUES('&identificacion','&correo','&contrasenia','&nombre','&apellido','&edad');
+
+INSERT INTO solicitante
+VALUES('&identificacion','&correo','&contrasenia','&nombre','&apellido','&edad','&cargo');
+
+CREATE SEQUENCE seq_RegistroPrestamo;
+
+INSERT INTO RegistroPrestamo
+VALUES(seq_RegistroPrestamo.NEXTVAL,'&objetoSolicita','&Especialidad',TO_DATE('&FechaHoraInicio', 'DD-MM-YYYY HH24:MI'),TO_DATE('&FechaHoraFin', 'DD-MM-YYYY HH24:MI'),'&idSolicitante','&idAdmin');
+
+CREATE SEQUENCE seq_ReportesPrestamo;
+
+INSERT INTO ReportesPrestamo
+VALUES(seq_ReportesPrestamo.NEXTVAL,'&estadoPrestamo','&correoSolicitante','&idPrestamo');
+
+CREATE SEQUENCE seq_Edificio1;
+
+INSERT INTO edificio
+VALUES(seq_Edificio1.NEXTVAL,'&nombre');
+
+INSERT INTO sala_informatica
+VALUES('&codigo','&observaciones','&idEdificio');
+
+INSERT INTO equipo_audiovisual
+VALUES('&codigo','&nombre','&observaciones','&idEdificio');
+
+CREATE SEQUENCE seq_prestamoSala;
+
+INSERT INTO PrestamoSala
+VALUES(seq_prestamoSala.NEXTVAL,'&idRegistroPrestamo','&codigoSala');
+
+CREATE SEQUENCE seq_prestamoEquipo;
+
+INSERT INTO PrestamoEquipo
+VALUES(seq_prestamoEquipo.NEXTVAL,'&idRegistroPrestamo','&codigoEquipo');
+
+-------------------------------------------------------------------------------------
+
+READ
+
+SELECT * FROM 
+
+SELECT * FROM SOLICITANTE;
+
+SELECT * FROM REGISTROPRESTAMO;
+
+SELECT * FROM SOLICITANTE WHERE IDENTIFICACION = 310637;
+
+SELECT * FROM EQUIPO_AUDIOVISUAL;
+
+SELECT * FROM EQUIPO_AUDIOVISUAL WHERE CODIGO = '4';
+
+SELECT * FROM REPORTESPRESTMO;
+
+SELECT * FROM EDIFICIO;
+
+* UPDATE 
+
+UPDATE EQUIPO_AUDIOVISUAL
+SET OBSERVACIONES = 'Excelente Estado'
+WHERE CODIGO = 4;
+
+UPDATE SOLICITANTE
+SET EDAD = 25
+WHERE IDENTIFICACION = 310637;
+
+UPDATE REPORTESPRESTAMO
+SET ESTADOPRESTAMO = 'PROXIMO A VENCER';
+WHERE idPrestamo = "";
+
+UPDATE registroprestamo
+SET fechahorafin = SYSDATE
+WHERE id = 5;
+
+UPDATE REPORTESPRESTAMO
+SET ESTADOPRESTAMO = 'Prestamo Terminado'
+WHERE idPrestamo = "";
+
+UPDATE REPORTESPRESTAMO
+SET ESTADOPRESTAMO = 'Se encontraron daños en el equipo'
+WHERE idPrestamo = "";
+
+
+* DELETE
+
+DELETE FROM EDIFICIO FROM ID = 40;
+
+DELETE FROM REGISTROPRESTAMO FROM ID = idPrestamo;
+DELETE FROM REGISTROPRESTAMO FROM ID = codRegElemento;
+
+-------------------------------------------------------------------------------------
+
+Procedimientos, Funciones y Disparadores
+
+- Incluir un nuevo Solicitante
+
+CREATE OR REPLACE PROCEDURE inc_solicitante (r_solicitante solicitante%ROWTYPE)
+IS
+BEGIN
+	INSERT INTO solicitante
+	VALUES r_solicitante;
+END;
+/
+
+DECLARE
+r_solicitante solicitante%ROWTYPE;
+
+BEGIN
+r_solicitante.IDENTIFICACION := '&IdentificacionSolicitante';
+r_solicitante.CORREO := '&CorreoSolicitante';
+r_solicitante.CONTRASENIA := '&ConstraseniaSolicitante';
+r_solicitante.NOMBRE := '&nombreSolicitante';
+r_solicitante.APELLIDO := '&apellidoSolicitante';
+r_solicitante.EDAD := '&edadSolicitante';
+r_solicitante.CARGO := '&cargoSolicitante';
+
+inc_solicitante(r_solicitante);
+
+COMMIT;
+END;
+/
+
+-Incluir un nuevo administrador de software
+
+CREATE OR REPLACE PROCEDURE inc_adminSoftware (r_adminSoftware administradorsoftware%ROWTYPE)
+IS
+BEGIN
+	INSERT INTO administradorsoftware
+	VALUES r_adminSoftware;
+END;
+/
+
+DECLARE
+r_adminSoftware administradorsoftware%ROWTYPE;
+
+BEGIN
+r_adminSoftware.IDENTIFICACION := '&IdentificacionAdminSoftware';
+r_adminSoftware.CORREO := '&CorreoAdminSoftware';
+r_adminSoftware.CONTRASENIA := '&ConstraseniaAdminSoftware';
+r_adminSoftware.NOMBRE := '&nombreAdminSoftware';
+r_adminSoftware.APELLIDO := '&apellidoAdminSoftware';
+r_adminSoftware.EDAD := '&edadAdminSoftware';
+
+inc_adminSoftware(r_adminSoftware);
+
+COMMIT;
+END;
+/
+
+- Incluir un nuevo préstamo.
+
+CREATE OR REPLACE PROCEDURE inc_prestamo (r_prestamo registroprestamo%ROWTYPE)
+IS
+BEGIN
+	INSERT INTO registroprestamo
+	VALUES r_prestamo;
+END;
+/
+
+DECLARE
+r_prestamo registroprestamo%ROWTYPE;
+
+BEGIN
+r_prestamo.ID := '&idPrestamo';
+r_prestamo.OBJETOSOLICITA := '&ObjetoSolicita';
+r_prestamo.ESPECIALIDAD := '&Especialidad';
+r_prestamo.FECHAHORAINICIO := TO_DATE('&FECHAHORAINICIO','DD-MM-YYYY');
+r_prestamo.FECHAHORAFIN := TO_DATE('&FECHAHORAFIN','DD-MM-YYYY');
+r_prestamo.IDSOLICITANTE := '&identSolicitante';
+r_prestamo.IDADMIN := '&identAdministradorSoftware';
+
+inc_prestamo(r_prestamo);
+
+COMMIT;
+END;
+/
+
+- Inclusión de un nuevo equipo
+
+CREATE OR REPLACE PROCEDURE inc_equipo(r_equipo equipo_audiovisual%ROWTYPE)
+IS
+BEGIN
+INSERT INTO EQUIPO_AUDIOVISUAL
+VALUES r_equipo;
+END;
+/
+
+DECLARE
+r_equipo equipo_audiovisual%ROWTYPE;
+
+BEGIN
+r_equipo.CODIGO := '&codigoEquipo';
+r_equipo.NOMBRE := '&nombreEquipo';
+r_equipo.OBSERVACIONES := '&observacionesEquipo';
+r_equipo.IDEDIFICIO := '&idEdificio';
+
+inc_equipo(r_equipo);
+
+COMMIT;
+END;
+/
+
+- Para auditar la creación, eliminación y actualización de equipos y salas 
+
+CREATE TABLE auditoria_equipos_salas
+(id_auditoria NUMBER(10) CONSTRAINT audES_idau_pk PRIMARY KEY,
+tipo_elemento VARCHAR(50) CONSTRAINT audES_tipEl_nn NOT NULL,
+accion VARCHAR(100) CONSTRAINT audES_acc_nn NOT NULL,
+fechaRegistro DATE CONSTRAINT audES_fecreg_nn NOT NULL);
+
+CREATE SEQUENCE seq_id_auditoriaES;
+
+CREATE OR REPLACE PROCEDURE inc_auditoria_equipos_salas (r_auditoria_equipos_salas auditoria_equipos_salas%ROWTYPE)
+IS
+BEGIN
+INSERT INTO auditoria_equipos_salas
+VALUES (seq_id_auditoriaES.NEXTVAL, r_auditoria_equipos_salas.tipo_elemento, r_auditoria_equipos_salas.accion, r_auditoria_equipos_salas.fechaRegistro);
+END;
+/
+
+
+CREATE OR REPLACE TRIGGER trg_auditoria_equipos_salas
+AFTER INSERT OR UPDATE OR DELETE ON EQUIPO_AUDIOVISUAL
+FOR EACH ROW
+DECLARE
+    r_auditoria_equipos_salas auditoria_equipos_salas%ROWTYPE;
+BEGIN
+    r_auditoria_equipos_salas.fechaRegistro := SYSDATE;
+    r_auditoria_equipos_salas.tipo_elemento := 'Equipo Audiovisual';
+
+    IF INSERTING THEN
+        r_auditoria_equipos_salas.accion := 'Se realizó una creación de equipo ' || :NEW.CODIGO;
+    ELSIF DELETING THEN
+        r_auditoria_equipos_salas.accion := 'Se eliminó el equipo ' || :OLD.CODIGO;
+    ELSE
+        r_auditoria_equipos_salas.accion := 'Se modificó el equipo ' || :NEW.CODIGO;
+    END IF;
+
+    inc_auditoria_equipos_salas(r_auditoria_equipos_salas);
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg2_auditoria_equipos_salas
+AFTER INSERT OR UPDATE OR DELETE ON SALA_INFORMATICA
+FOR EACH ROW
+DECLARE
+    r_auditoria_equipos_salas auditoria_equipos_salas%ROWTYPE;
+BEGIN
+    r_auditoria_equipos_salas.fechaRegistro := SYSDATE;
+    r_auditoria_equipos_salas.tipo_elemento := 'Sala Informática';
+
+    IF INSERTING THEN
+        r_auditoria_equipos_salas.accion := 'Se creó una sala con código ' || :NEW.CODIGO;
+    ELSIF DELETING THEN
+        r_auditoria_equipos_salas.accion := 'Se eliminó una sala con código ' || :OLD.CODIGO;
+    ELSE
+        r_auditoria_equipos_salas.accion := 'Se modificó una sala con código ' || :NEW.CODIGO;
+    END IF;
+
+    inc_auditoria_equipos_salas(r_auditoria_equipos_salas);
+END;
+/
+
+FUNCIONES
+
+- Función para determinar si un préstamo está vencido
+
+CREATE OR REPLACE FUNCTION bus_EstadoPrestamo(v_idPrestamo NUMBER) 
+RETURN VARCHAR2
+IS
+    v_estado VARCHAR2(20);
+    v_fechaFin DATE;
+BEGIN
+    
+    SELECT fechahorafin INTO v_fechaFin 
+    FROM registroprestamo 
+    WHERE id = v_idPrestamo;
+
+    SELECT estadoprestamo INTO v_estado 
+    FROM reportesprestamo 
+    WHERE idprestamo = v_idPrestamo;
+
+    IF v_fechaFin < SYSDATE THEN
+        RETURN 'Vencido';
+    ELSE
+        RETURN v_estado;
+    END IF;
+END;
+/
+
+DECLARE
+    v_idPrestamo NUMBER;
+    v_estado VARCHAR2(20);
+
+BEGIN
+    v_idPrestamo := '&idPrestamo';
+    v_estado := bus_EstadoPrestamo(v_idPrestamo);
+
+    DBMS_OUTPUT.PUT_LINE('Estado del préstamo (ID ' || v_idPrestamo || '): ' || v_estado);
+END;
+/
+
+
+DISPARADORES
+
+- Cambiar el estado del equipo o sala cuando se devuelve un préstamo
+
+CREATE OR REPLACE TRIGGER tgr_EstadoPrestamo
+AFTER UPDATE ON REPORTESPRESTAMO
+FOR EACH ROW
+BEGIN
+    IF :NEW.estadoprestamo = 'Prestamo Terminado' THEN
+        
+        UPDATE equipo_audiovisual
+        SET observaciones = 'Disponible'
+        WHERE observaciones = 'Ocupado'
+        AND codigo IN (
+            SELECT pe.codigoequipo 
+            FROM registroprestamo rp
+            JOIN prestamoequipo pe ON rp.id = pe.idprestamo
+            WHERE rp.id = :NEW.id
+        );
+
+        UPDATE sala_informatica
+        SET observaciones = 'Disponible'
+        WHERE observaciones = 'Ocupado'
+        AND codigo IN (
+            SELECT ps.codigosala 
+            FROM registroprestamo rp
+            JOIN prestamosala ps ON rp.id = ps.idprestamo
+            WHERE rp.id = :NEW.id
+        );
+    END IF;
+END;
+/
+---------------------------------------------------
+SOLICITANTES
+
+angelcastro@gmail.com
+6666
+
+javiersalazar@gmail.com
+7777
+
+nataquitero@gmail.com
+8888
+
+gabrielalvarez4@gmail.com
+9999
+
+SamZambrano@gmail.com
+1010
+
+estefaniavalencia33@gmail.com
+1212
+
+
+richardlopez11@gmail.com
+1313
+
+marianalesmes26@gmail.com
+1414
+
+zharickcobos11@gmail.com
+1515
+
+yurannyhernandez10@gmail.com
+1616
+
+sthervas@gmail.com
+0000
+
+ADMINISTRADORES
+
+andresgarcia1@gmail.com
+1111
+
+lausvargas@gmail.com
+2222
+
+alejogomez@gmail.com
+3333
+
+
+mariaherrera@gmail.com
+4444
+
+isamontoya@gmail.com
+5555
+
+edinssonj@gmail.com
+2020
+
+valerie.afa@gmail.com
+12345
+
+---------------------------------------------------
+- VERIFICACION FUNCIONALIDAD INTERFAZ USUARIO  EDITAR Y ELMINAR PRESTAMOS 
+
+SELECT * FROM REGISTROPRESTAMO;
+
+SELECT * FROM REPORTESPRESTAMO;
+
+SELECT * FROM PRESTAMOEQUIPO;
+
+SELECT * FROM PRESTAMO SALA;
+
+
+
+
+
+
+
+
+

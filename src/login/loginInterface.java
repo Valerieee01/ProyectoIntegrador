@@ -106,9 +106,16 @@ public class loginInterface extends JFrame {
 		                    ResultSet rsAdmin = pstAdmin.executeQuery();
 
 		                    if (rsAdmin.next()) {
+		                        Long id = rsAdmin.getLong("identificacion");
 		                        String nombre = rsAdmin.getString("nombre");
-		                        JOptionPane.showMessageDialog(null, "Bienvenido Administrador: " + nombre);
+		                        String apellido = rsAdmin.getString("apellido");
+		                        String correoUsuario = rsAdmin.getString("correo");
 
+		                        // Guardar usuario en sesión
+		                        util.UsuarioSesion.iniciarSesion(id, nombre, apellido, correoUsuario);
+
+		                        JOptionPane.showMessageDialog(null, "Bienvenido Administrador: " + nombre);
+		                        
 		                        // Abrir ventana de administrador
 		                        mainInterfaceAdmin adminFrame = new mainInterfaceAdmin();
 		                        adminFrame.setVisible(true);
@@ -118,14 +125,20 @@ public class loginInterface extends JFrame {
 		                }
 
 		                // Verificar en solicitante
-		                String querySolicitante = "SELECT nombre FROM solicitante WHERE correo = ? AND contrasenia = ?";
+		                String querySolicitante = "SELECT identificacion, nombre, apellido, correo FROM solicitante WHERE correo = ? AND contrasenia = ?";
 		                try (PreparedStatement pstSolicitante = conn.prepareStatement(querySolicitante)) {
 		                    pstSolicitante.setString(1, correo);
 		                    pstSolicitante.setString(2, password);
 		                    ResultSet rsSolicitante = pstSolicitante.executeQuery();
-
 		                    if (rsSolicitante.next()) {
+		                        Long id = rsSolicitante.getLong("identificacion");
 		                        String nombre = rsSolicitante.getString("nombre");
+		                        String apellido = rsSolicitante.getString("apellido");
+		                        String correoUsuario = rsSolicitante.getString("correo");
+
+		                        // Guardar usuario en sesión
+		                        util.UsuarioSesion.iniciarSesion(id, nombre, apellido, correoUsuario);
+
 		                        JOptionPane.showMessageDialog(null, "Bienvenido Solicitante: " + nombre);
 
 		                        // Abrir ventana de solicitante

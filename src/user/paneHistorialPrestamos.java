@@ -20,12 +20,16 @@ import java.awt.CardLayout;
 
 import userClass.BotonEditor;
 import userClass.BotonRenderer;
+import userClass.FormularioEditarPrestamo;
+import util.UsuarioSesion;
 
 public class paneHistorialPrestamos extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 	private static DefaultTableModel modelo;
 	private static JTable tabla;
+	private Long idUsuario = UsuarioSesion.getIdentificacion();
+	private String nombre = UsuarioSesion.getNombre();
 
 	/**
 	 * Create the panel.
@@ -50,7 +54,7 @@ public class paneHistorialPrestamos extends JPanel {
 	    tabla = new JTable(modelo);
 	    tabla.setRowHeight(40);
 	    tabla.getColumn("Acciones").setCellRenderer(new BotonRenderer());
-	    tabla.getColumn("Acciones").setCellEditor(new BotonEditor(new JCheckBox()));
+	    tabla.getColumn("Acciones").setCellEditor(new BotonEditor(new JCheckBox(), this));
 	
 	    JScrollPane scroll = new JScrollPane(tabla);
 	    add(scroll, BorderLayout.CENTER);
@@ -58,16 +62,21 @@ public class paneHistorialPrestamos extends JPanel {
 	}
 	
 	public void cargarPrestamosDesdeBD() {
+	    Long idUsuario = util.UsuarioSesion.getIdentificacion(); // ID del usuario logueado
+	    if (idUsuario == null) return;
+
 	    try (Connection conn = util.ConexionBDSoli.obtenerConexionSolicitante()) {
 	        String sql = """
 	            SELECT rp.id, rp.objetoSolicita, rp.FechaHoraInicio, rp.FechaHoraFin,
 	                   rpp.estadoPrestamo
 	            FROM AdminGestrorPrestamos.RegistroPrestamo rp
 	            JOIN AdminGestrorPrestamos.ReportesPrestamo rpp ON rp.id = rpp.idPrestamo
+	            WHERE rp.idSolicitante = ?
 	            ORDER BY rp.FechaHoraInicio DESC
 	        """;
 
 	        PreparedStatement stmt = conn.prepareStatement(sql);
+	        stmt.setLong(1, idUsuario); // Solo muestra préstamos de ese usuario
 	        ResultSet rs = stmt.executeQuery();
 
 	        modelo.setRowCount(0); // Limpiar tabla
@@ -88,40 +97,31 @@ public class paneHistorialPrestamos extends JPanel {
 	        JOptionPane.showMessageDialog(this, "Error al cargar los préstamos: " + e.getMessage());
 	    }
 	}
+
 	
-	public void actionPerformed(ActionEvent e) {
-	    int fila = tabla.getSelectedRow();
-	    Long idPrestamo = (Long) tabla.getValueAt(fila, 0);
 
-	    String[] opciones = {"Editar", "Eliminar"};
-	    int eleccion = JOptionPane.showOptionDialog(tabla,
-	        "¿Qué desea hacer con el préstamo ID: " + idPrestamo + "?",
-	        "Acción",
-	        JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
-	        opciones, opciones[0]);
 
-	    if (eleccion == 0) { // Editar
-	        editarPrestamo(idPrestamo);
-	    } else if (eleccion == 1) { // Eliminar
-	        eliminarPrestamo(idPrestamo);
-	    }
-	}
+	public void editarPrestamo(Long idPrestamo, int filaTabla) {
+		FormularioEditarPrestamo form = new FormularioEditarPrestamo(null, tabla, filaTabla);
+	    form.setVisible(true);
 
-	public void editarPrestamo(Long idPrestamo) {
-	    String nuevaFechaInicio = JOptionPane.showInputDialog("Nueva Fecha Inicio (YYYY-MM-DD):");
-	    String nuevaFechaFin = JOptionPane.showInputDialog("Nueva Fecha Fin (YYYY-MM-DD):");
-	    String nuevoEstado = JOptionPane.showInputDialog("Nuevo Estado (Activo, Finalizado, etc):");
+	    // Luego de cerrar el formulario, actualiza en la BD con los nuevos valores
+	    String nuevoElemento = tabla.getValueAt(filaTabla, 1).toString();
+	    String nuevaFechaInicio = tabla.getValueAt(filaTabla, 2).toString();
+	    String nuevaFechaFin = tabla.getValueAt(filaTabla, 3).toString();
+	    String nuevoEstado = tabla.getValueAt(filaTabla, 4).toString();
 
 	    try (Connection conn = util.ConexionBDSoli.obtenerConexionSolicitante()) {
-	        String update1 = "UPDATE AdminGestrorPrestamos.RegistroPrestamo SET FechaHoraInicio = ?, FechaHoraFin = ? WHERE id = ?";
+	        String update1 = "UPDATE AdminGestrorPrestamos.RegistroPrestamo SET objetoSolicita = ?, FechaHoraInicio = ?, FechaHoraFin = ? WHERE id = ?";
 	        String update2 = "UPDATE AdminGestrorPrestamos.ReportesPrestamo SET estadoPrestamo = ? WHERE idPrestamo = ?";
 
 	        try (PreparedStatement ps1 = conn.prepareStatement(update1);
 	             PreparedStatement ps2 = conn.prepareStatement(update2)) {
 
-	            ps1.setDate(1, Date.valueOf(nuevaFechaInicio));
-	            ps1.setDate(2, Date.valueOf(nuevaFechaFin));
-	            ps1.setLong(3, idPrestamo);
+	            ps1.setString(1, nuevoElemento);
+	            ps1.setDate(2, Date.valueOf(nuevaFechaInicio));
+	            ps1.setDate(3, Date.valueOf(nuevaFechaFin));
+	            ps1.setLong(4, idPrestamo);
 	            ps1.executeUpdate();
 
 	            ps2.setString(1, nuevoEstado);
@@ -136,6 +136,7 @@ public class paneHistorialPrestamos extends JPanel {
 	        JOptionPane.showMessageDialog(null, "Error al editar: " + ex.getMessage());
 	    }
 	}
+
 
 	
 	public void eliminarPrestamo(Long idPrestamo) {
